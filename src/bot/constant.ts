@@ -1,0 +1,1 @@
+export const token = process.env.TELEGRAM_TOKEN || '';
