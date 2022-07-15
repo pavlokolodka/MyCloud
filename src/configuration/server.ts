@@ -1,4 +1,5 @@
 import express from 'express';
+import formidable from 'express-formidable';
 
 class Server {
   public app: express.Application;
@@ -14,6 +15,8 @@ class Server {
  
   private initializeMiddlewares() {
     this.app.use(express.json());
+    this.app.use(express.urlencoded({extended: true}));
+    this.app.use(formidable());
   }
  
   private initializeControllers(controllers: any) {
