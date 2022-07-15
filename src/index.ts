@@ -1,21 +1,15 @@
-import express, { Express, Request, Response } from 'express';
+// import express, { Express, Request, Response } from 'express';
 import 'dotenv/config'
-import {BotService} from './bot/bot.service';
+import StorageController from './storage/storage.controller';
+import Server from './configuration/server';
+
+const port = Number(process.env.PORT) || 3000;
 
 
-const app: Express = express();
-const port = process.env.PORT || 3000;
-
-
-             
-const bot = new BotService();
-bot.greet()
-
-
-app.get('/', (req: Request, res: Response) => {
-  res.send('Express + TypeScript Server');
-});
-
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
-});
+const app = new Server(
+  [
+    new StorageController()
+  ],
+  port
+);
+app.listen()
