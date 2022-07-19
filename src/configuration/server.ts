@@ -1,16 +1,21 @@
 import express from 'express';
 import formidable from 'express-formidable';
+import { ConnectToDb } from './database-connection'; 
+
 
 class Server {
   public app: express.Application;
   public port: number;
+  private db: ConnectToDb;
  
   constructor(controllers: Array<any>, port: number) {
     this.app = express();
     this.port = port;
- 
+    this.db = ConnectToDb.getDB();
+    
     this.initializeMiddlewares();
     this.initializeControllers(controllers);
+    this.connectToDb();
   }
  
   private initializeMiddlewares() {
@@ -23,6 +28,10 @@ class Server {
     controllers.forEach((controller: any) => {
       this.app.use('/', controller.router);
     });
+  }
+
+  private connectToDb() {
+    this.db.connect();
   }
  
   public listen() {
