@@ -16,6 +16,22 @@ const fileSchema = new Schema<IFile>({
     type: String,
     require: true
   },
+  size: {
+    type: Number,
+    require: true
+  },
+  type: {
+    type: String,
+    require: true
+  },
+  parent: {
+    type: Schema.Types.ObjectId,
+    ref: 'File'
+  },
+  childs: [{
+    type: Schema.Types.ObjectId,
+    ref: 'File'
+  }],
   date: {
     type: Date,
     default: Date.now
