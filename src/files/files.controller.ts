@@ -1,4 +1,5 @@
 import express, { Router } from "express";
+import { HttpError } from "../utils/Error";
 import FileService from './files.service';
 
 
@@ -27,15 +28,35 @@ class FileController {
     // });
     
     this.router.post(this.path, async (req, res) => {
-      const file = await this.fileService.createDirectory(req, res);
-
-      return res.send(file);
+      try {
+        const name = req?.fields?.name as string;
+        const type = req?.fields?.type as string;
+        const parent = req?.fields?.parent as string;
+        
+        if (!(name && type) ) return res.status(400).send({message: 'name or type not passed', status: 400});
+        
+        const file = await this.fileService.createDirectory(name, type, parent); 
+        return res.send(file);
+      } catch(e: unknown) {
+        if (!(e instanceof HttpError)) throw e;
+        return res.status(e.status).send({message: e.message, status: e.status})
+      }     
     })
 
     this.router.post(`${this.path}/create`, async (req, res) => {
-      const file = await this.fileService.create(req, res);
+      try {
+        const reqFile: any = req?.files?.file;
+        const parent = req?.fields?.parent as string;
+    
+        if (!reqFile) return res.status(400).send({message: 'file not passed', status: 400});
 
-      return res.send(file);
+        const file = await this.fileService.create(reqFile, parent);
+
+        return res.send(file);
+      } catch(e: unknown) {
+        if (!(e instanceof HttpError)) throw e;
+        return res.status(e.status).send({message: e.message, status: e.status})
+      }   
     });
 
     
