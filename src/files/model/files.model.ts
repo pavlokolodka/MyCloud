@@ -35,6 +35,10 @@ const fileSchema = new Schema<IFile>({
   date: {
     type: Date,
     default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
 });
 
