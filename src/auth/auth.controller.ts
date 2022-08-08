@@ -4,6 +4,7 @@ import { AuthService } from "./auth.service";
 import { validationResult } from 'express-validator';
 import { isValidUser } from "../middleware/validator";
 import { ICreateUserDto } from "./dto/create-user.dto";
+import { ILoginDto } from "./dto/login.dto";
 
 
 
@@ -18,19 +19,13 @@ export class AuthController {
   }
 
   public intializeRoutes() {
-    this.router.post(`${this.path}/login`, isValidUser, async (req: Request, res: Response) => {
+    this.router.post(`${this.path}/login`, async (req: Request, res: Response) => {
       try {
-        const errors = validationResult(req);
-
-        if (!errors.isEmpty()) {
-          throw new HttpError(`${errors.array()[0].msg}`, 400);
-        }
-
-        const {name, email, password}: ICreateUserDto = req.body;  
+        const {email, password}: ILoginDto = req.body;  
         
-        // if (!(name && email && password)) throw new HttpError('name or email or password not passed', 400);
+        if (!(email && password)) throw new HttpError('email or password not passed', 400);
 
-        const newUser = await this.authService.login(name, email, password);
+        const newUser = await this.authService.login(email, password);
 
         return res.send(newUser);
       } catch (e) {
@@ -39,9 +34,19 @@ export class AuthController {
       }
     })
     
-    this.router.post(`${this.path}/register`, (req, res) => {
+    this.router.post(`${this.path}/register`, isValidUser, async (req: Request, res: Response) => {
       try {
+        const errors = validationResult(req);
 
+        if (!errors.isEmpty()) {
+          throw new HttpError(`${errors.array()[0].msg}`, 400);
+        }
+
+        const {name, email, password}: ICreateUserDto = req.body;  
+    
+        const newUser = await this.authService.register(name, email, password);
+
+        return res.send(newUser);
       } catch (e) {
         if (!(e instanceof HttpError)) return res.send(e);
         return res.status(e.status).send({message: e.message, status: e.status});
