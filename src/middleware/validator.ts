@@ -15,8 +15,11 @@ export const isValidUser = [
       throw new Error(`${e}`);
     }
   }),
-  body('password', 'Password must be at least 6 characters')
+  body('password', 'password must be at least 6 characters')
   .isLength({min: 6, max: 20})
   .isAlphanumeric()
+  .trim(),
+  body('name', 'name must be at least 3 characters')
+  .isLength({min: 6, max: 25})
   .trim()
 ]
