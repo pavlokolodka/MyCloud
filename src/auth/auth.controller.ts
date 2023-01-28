@@ -3,7 +3,7 @@ import { HttpError } from "../utils/Error";
 import { AuthService } from "./auth.service";
 import { validationResult } from 'express-validator';
 import { isValidUser } from "../middleware/validator";
-import { ICreateUserDto } from "./dto/create-user.dto";
+import { IRegisterUserDto } from "./dto/register.dto";
 import { ILoginDto } from "./dto/login.dto";
 
 
@@ -29,7 +29,7 @@ export class AuthController {
 
         return res.send(newUser);
       } catch (e) {
-        if (!(e instanceof HttpError)) return res.send(e);
+        if (!(e instanceof HttpError)) return res.status(500).send('Internal server error');
         return res.status(e.status).send({message: e.message, status: e.status});
       }
     })
@@ -42,14 +42,28 @@ export class AuthController {
           throw new HttpError(`${errors.array()[0].msg}`, 400);
         }
 
-        const {name, email, password}: ICreateUserDto = req.body;  
+        const {name, email, password}: IRegisterUserDto = req.body;  
     
         const newUser = await this.authService.register(name, email, password);
 
         return res.send(newUser);
       } catch (e) {
-        if (!(e instanceof HttpError)) return res.send(e);
+        if (!(e instanceof HttpError)) return res.status(500).send('Internal server error');
         return res.status(e.status).send({message: e.message, status: e.status});
+      }
+    })
+
+    this.router.post(`${this.path}/refresh-tokens`, async (req: Request, res: Response) => {
+      try {
+        const {refreshToken} = req.body;
+        console.log('ref', refreshToken)
+        const refreshTokens = this.authService.refreshTokens(refreshToken);
+
+        return res.send(refreshTokens);
+      } catch (error) {
+        if (!(error instanceof HttpError)) return res.status(500).send('Internal server error');
+        
+        return res.set('WWW-Authenticate', 'Bearer').status(error.status).send({message: error.message, status: error.status});
       }
     })
   }
