@@ -1,5 +1,6 @@
 import express from 'express';
-import formidable from 'express-formidable';
+import * as fs from 'fs';
+import path from 'path';
 import { ConnectToDb } from './database-connection'; 
 
 
@@ -19,9 +20,9 @@ class Server {
   }
  
   private initializeMiddlewares() {
-    this.app.use(express.json());
+    if (!fs.existsSync(path.resolve('src', 'storage'))) fs.mkdirSync(path.resolve('src', 'storage'));
     this.app.use(express.urlencoded({extended: true}));
-    this.app.use(formidable());
+    this.app.use(express.json());
   }
  
   private initializeControllers(controllers: any) {

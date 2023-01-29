@@ -9,7 +9,6 @@ export interface IUser {
   email: string, 
   password: string,
   date?: Date,
-  updatedAt?: Date,
-  files?: IFile['_id'][], 
+  updatedAt?: Date, 
   save?: () => Promise<this>;
 }

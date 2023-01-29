@@ -16,10 +16,6 @@ const userSchema = new Schema<IUser>({
     type: String,
     require: true
   },
-  files: [{
-    type: Schema.Types.ObjectId,
-    ref: 'File'
-  }],
   date: {
     type: Date,
     default: Date.now

@@ -1,17 +1,16 @@
 import mongoose from "mongoose";
-
-
-
+import { IUser } from "../../users/model/users.interface";
 export interface IFile {
   _id?: mongoose.Types.ObjectId,
   name: string,
-  storageId?: string, // | null
+  storageId?: string, 
   link?: string,
   size?: number,
   date?: Date,
   updatedAt?: Date,
   type: string,
-  childs?: IFile['_id'][], // / []
+  userId: IUser['_id'],
+  childs?: IFile['_id'][], 
   parent: IFile['_id'] | null,
   save?: () => Promise<this>;
 }

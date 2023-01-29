@@ -25,7 +25,6 @@ export class AuthService {
       user: {
       name: candidate.name,
       email: candidate.email,
-      files: candidate.files,
     }};
 
     return user;

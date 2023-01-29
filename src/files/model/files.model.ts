@@ -9,12 +9,10 @@ const fileSchema = new Schema<IFile>({
     require: true
   },
   storageId: {
-    type: String,
-    require: true
+    type: String
   },
   link: {
-    type: String,
-    require: true
+    type: String
   },
   size: {
     type: Number,
@@ -23,6 +21,10 @@ const fileSchema = new Schema<IFile>({
   type: {
     type: String,
     require: true
+  },
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
   },
   parent: {
     type: Schema.Types.ObjectId,
@@ -43,4 +45,4 @@ const fileSchema = new Schema<IFile>({
 });
 
 
-export const File = model<IFile>('Files', fileSchema);
+export const File = model<IFile>('File', fileSchema);

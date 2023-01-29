@@ -20,6 +20,6 @@ export const isValidUser = [
   .isAlphanumeric()
   .trim(),
   body('name', 'name must be at least 3 characters')
-  .isLength({min: 6, max: 25})
+  .isLength({min: 3, max: 25})
   .trim()
 ]

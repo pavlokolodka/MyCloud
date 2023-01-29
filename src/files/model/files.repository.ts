@@ -1,7 +1,8 @@
 import { HttpError } from '../../utils/Error';
-import { IFileRepository } from './files.interface-repository';
+import { IFileRepository } from './files.repository-interface';
 import { IFile } from './files.interface';
 import { File } from './files.model';
+import mongoose from 'mongoose';
 
 export class FileRepository implements IFileRepository<IFile> {
 
@@ -42,9 +43,10 @@ export class FileRepository implements IFileRepository<IFile> {
   }
 
 
-  public async getOne(query: object) {
+  public async getOne(query: object, userId: mongoose.Types.ObjectId) {
     try {
-      const file = await this.database.findOne(query)//.populate('parent')//.populate('childs');
+      const file = await this.database.findOne(query).where('userId').equals(userId)
+      // const file = await this.database.findOne(query)//.populate('parent')//.populate('childs');
       return file;
     } catch (e) {
       throw new HttpError('can not get file', 500)
