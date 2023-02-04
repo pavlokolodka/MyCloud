@@ -125,9 +125,10 @@ class FileService {
     return file;
   }
 
-  async createDirectory(name: string, type: string, token: string, parent?: string) {
+  async createDirectory(name: string, token: string, parent?: string) {
+    const type = 'directory';
     const user = await this.getUser(token);
-
+  
     if (!parent) {
       const directory = await this.fileRepo.create({name, type, parent: null, userId: user._id});
       return directory;

@@ -2,7 +2,7 @@ import { Router, Request, Response } from "express";
 import { HttpError } from "../utils/Error";
 import { AuthService } from "./auth.service";
 import { validationResult } from 'express-validator';
-import { isValidUser } from "../middleware/validator";
+import { isValidUser, loginValidation, tokenValidation } from "../middleware/validator";
 import { IRegisterUserDto } from "./dto/register.dto";
 import { ILoginDto } from "./dto/login.dto";
 
@@ -19,12 +19,15 @@ export class AuthController {
   }
 
   public intializeRoutes() {
-    this.router.post(`${this.path}/login`, async (req: Request, res: Response) => {
+    this.router.post(`${this.path}/login`, loginValidation, async (req: Request, res: Response) => {
       try {
-        const {email, password}: ILoginDto = req.body;  
-        
-        if (!(email && password)) throw new HttpError('email or password not passed', 400);
+        const errors = validationResult(req);
 
+        if (!errors.isEmpty()) {
+          throw new HttpError(`${errors.array()[0].msg}`, 400);
+        }
+
+        const {email, password}: ILoginDto = req.body;  
         const newUser = await this.authService.login(email, password);
 
         return res.send(newUser);
@@ -53,10 +56,15 @@ export class AuthController {
       }
     })
 
-    this.router.post(`${this.path}/refresh-tokens`, async (req: Request, res: Response) => {
+    this.router.post(`${this.path}/refresh-tokens`, tokenValidation, async (req: Request, res: Response) => {
       try {
+        const errors = validationResult(req);
+
+        if (!errors.isEmpty()) {
+          throw new HttpError(`${errors.array()[0].msg}`, 400);
+        }
+
         const {refreshToken} = req.body;
-        console.log('ref', refreshToken)
         const refreshTokens = this.authService.refreshTokens(refreshToken);
 
         return res.send(refreshTokens);

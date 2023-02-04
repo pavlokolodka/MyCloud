@@ -1,10 +1,12 @@
-import express, { Router } from "express";
+import express, { Router, Request, Response } from "express";
 import { HttpError } from "../utils/Error";
 import FileService from './files.service';
 import https from "https"
 import { uploadMiddlware } from "../middleware/uploadMiddleware";
 import { ICreateDirectoryDto } from "./dto/create-directory.dto";
 import { IGetFilesDto } from "./dto/get-files.dto";
+import { directoryValidation } from "../middleware/validator";
+import { validationResult } from "express-validator";
 
 class FileController {
   private path = '/storage';
@@ -18,7 +20,7 @@ class FileController {
  
   public intializeRoutes() {
     // download file 
-    this.router.get(`${this.path}/download`, async (req, res) => {
+    this.router.get(`${this.path}/download`, async (req: Request, res: Response) => {
       try {
         const id = req.query.id as string;
         const token = req.headers['authorization']
@@ -32,7 +34,7 @@ class FileController {
       
         https.get(file.link!, function (file) {
           res.set('Content-disposition', 'attachment; filename=' + encodeURI(name));
-        
+       
           file.pipe(res);
         })
       } catch (e) {
@@ -42,9 +44,8 @@ class FileController {
     });
     
     // get all files + sort
-    this.router.get(this.path, async (req, res) => {
+    this.router.get(this.path, async (req: Request, res: Response) => {
       try {
-        // https://stackoverflow.com/questions/37377731/extend-express-request-object-using-typescript/55718334#55718334
         const token = req.headers['authorization']
        
         if (!token) throw new HttpError('Invalid JWT token', 401)
@@ -60,17 +61,20 @@ class FileController {
     });
 
     // create directory
-    this.router.post(this.path, async (req, res) => {
+    this.router.post(this.path, directoryValidation, async (req: Request, res: Response) => {
       try {
-        const {name, type, parent}: ICreateDirectoryDto = req.body;
+        const errors = validationResult(req);
+
+        if (!errors.isEmpty()) {
+          throw new HttpError(`${errors.array()[0].msg}`, 400);
+        }
+
+        const {name, parent}: ICreateDirectoryDto = req.body;
         const token = req.headers['authorization']
       
         if (!token) throw new HttpError('Invalid JWT token', 401)
-       
         
-        if (!(name && type) ) return res.status(400).send({message: 'name or type not passed', status: 400});
-        
-        const file = await this.fileService.createDirectory(name, type, token, parent); 
+        const file = await this.fileService.createDirectory(name, token, parent); 
         return res.send(file);
       } catch(e: unknown) {
         if (!(e instanceof HttpError)) return res.send(e);
@@ -79,7 +83,7 @@ class FileController {
     })
 
     // save new file
-    this.router.post(`${this.path}/create`, uploadMiddlware, async (req, res) => {
+    this.router.post(`${this.path}/create`, uploadMiddlware, async (req: Request, res: Response) => {
       try {
         const token = req.headers['authorization']
        
@@ -106,8 +110,8 @@ class FileController {
       
     // });
 
-    this.router.delete(`${this.path}/:id/delete`, async (req, res) => {
-      try { 
+    this.router.delete(`${this.path}/:id/delete`, async (req: Request, res: Response) => {
+      try {        
         const token = req.headers['authorization'];
        
         if (!token) throw new HttpError('Invalid JWT token', 401);
