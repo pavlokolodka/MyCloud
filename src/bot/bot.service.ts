@@ -1,6 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api';
-import {token} from './constant';
-
+import { HttpError } from '../utils/Error';
+import {token} from './constants';
+import {chatID} from './constants';
 
 export class BotService {
 
@@ -13,7 +14,45 @@ export class BotService {
     if (msg.text) {
       this.bot.sendMessage(msg.chat.id, msg.text);
     }
-
     })
+  }
+
+  sendPhoto(file: any) {
+    const res = this.bot.sendPhoto(chatID, file).catch(e => {
+      throw new HttpError('internal server error', 500);
+    })
+    return res;
+  }
+
+  sendDocs(file: any, fileOptions: Object) {
+    const res = this.bot.sendDocument(chatID, file, {}, fileOptions).catch(e => {
+      throw new HttpError('internal server error', 500);
+    })
+
+    return res;
+  }
+
+  sendAudio(file: any) {
+    const res = this.bot.sendAudio(chatID, file).catch(e => {
+      throw new HttpError('internal server error', 500);
+    })
+
+    return res;
+  }
+
+  sendVideo(file: any) {
+    const res = this.bot.sendVideo(chatID, file).catch(e => {
+      throw new HttpError('internal server error', 500);
+    })
+
+    return res;
+  }
+
+  getLink(id: string) {
+    const file = this.bot.getFileLink(id).catch(e => {
+      throw new HttpError('internal server error', 500);
+    })
+  
+    return file;
   }
 }

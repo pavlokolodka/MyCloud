@@ -9,6 +9,8 @@ import { IFileRepository } from "./model/files.repository-interface";
 import { AuthService } from "../auth/auth.service";
 import { UserService } from "../users/users.service";
 import { IUser } from "../users/model/users.interface";
+import { TelegramAudioDocument, TelegramDocument } from "../bot/types/telegram-file.type";
+import { FileOptions } from "./types/file-options.type";
 
 
 class FileService {
@@ -65,24 +67,31 @@ class FileService {
     const user = await this.getUser(token);
     const path = reqFile.path;
     const fileOptions = {
-      filename: reqFile.name
+      filename: reqFile.name,
+      type: reqFile.type,
+    } as FileOptions;
+    let fileId: string;
+    let savedFile: TelegramDocument | TelegramAudioDocument;
+
+    if (fileOptions.type.split('/')[0] === 'audio') {
+      savedFile = await this.saveFile(path, fileOptions) as TelegramAudioDocument;
+      fileId = savedFile.audio.file_id;  
+    } else {
+      savedFile = await this.saveFile(path, fileOptions) as TelegramDocument;
+      fileId = savedFile.document.file_id;
     }
-
-    const savedFile = await this.saveFile(path, fileOptions);
-     // delete file from disk (temporary)
-    this.deleteFromDisk(path);
-
-    const fileId = savedFile?.document?.file_id;
-    const fileLink = await this.botService.getLink(fileId!);
-    const fileType = reqFile?.name?.split('.').pop();
     
+    this.deleteFromDisk(path);
+    const fileLink = await this.botService.getLink(fileId);
+    const fileType = reqFile?.name?.split('.').pop();
+   
     if (!parent) {
       const file = await this.fileRepo.create({
         name: reqFile.name,
-        storageId: fileId!,
+        storageId: fileId,
         link: fileLink,
         size: reqFile.size,
-        type: fileType!,
+        type: fileType,
         childs: [],
         parent: null,
         userId: user._id
@@ -187,8 +196,14 @@ class FileService {
     })
   }
 
-  private async saveFile(path: string, fileOptions: Object) {
-    return await this.botService.sendDocs(path, fileOptions);
+  private async saveFile(path: string, fileOptions: FileOptions) {
+    const file = await this.botService.sendDocs(path, fileOptions);
+
+    if (!file) throw new HttpError('internal server error', 500);
+
+    if (fileOptions.type.split('/')[0] === 'audio') return file as TelegramAudioDocument;
+
+    return file as TelegramDocument;
   }
 
   private deleteFromDisk(path: string) {
