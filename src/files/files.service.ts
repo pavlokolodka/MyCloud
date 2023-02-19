@@ -11,6 +11,7 @@ import { UserService } from "../users/users.service";
 import { IUser } from "../users/model/users.interface";
 import { TelegramAudioDocument, TelegramDocument } from "../bot/types/telegram-file.type";
 import { FileOptions } from "./types/file-options.type";
+import DataEncode from "../utils/file-encryption/encrypt";
 
 
 class FileService {
@@ -60,7 +61,11 @@ class FileService {
 
     await this.checkLinkExp([file]);
 
-    return file;
+    return {
+      name: file.name,
+      link: file.link,
+      secret: user.email
+    };
   }
 
   async create(reqFile: any, token: string, parent?: string) {
@@ -69,6 +74,7 @@ class FileService {
     const fileOptions = {
       filename: reqFile.name,
       type: reqFile.type,
+      secret: user.email,
     } as FileOptions;
     let fileId: string;
     let savedFile: TelegramDocument | TelegramAudioDocument;
@@ -198,9 +204,12 @@ class FileService {
   }
 
   private async saveFile(path: string, fileOptions: FileOptions) {
-    const file = await this.botService.sendDocs(path, fileOptions);
+    const encryptedFilePath = await DataEncode.encrypt(path, fileOptions.secret);
+    const file = await this.botService.sendDocs(encryptedFilePath, fileOptions);
 
     if (!file) throw new HttpError('internal server error', 500);
+
+    this.deleteFromDisk(encryptedFilePath);
 
     if (fileOptions.type.split('/')[0] === 'audio') return file as TelegramAudioDocument;
 

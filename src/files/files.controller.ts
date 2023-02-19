@@ -7,6 +7,7 @@ import { ICreateDirectoryDto } from "./dto/create-directory.dto";
 import { IGetFilesDto } from "./dto/get-files.dto";
 import { directoryValidation } from "../middleware/validator";
 import { validationResult } from "express-validator";
+import DataEncode from "../utils/file-encryption/encrypt";
 
 class FileController {
   private path = '/storage';
@@ -29,13 +30,12 @@ class FileController {
 
         if (!id) throw new HttpError('file id not passed', 400);
      
-        const file = await this.fileService.getFile(id, token);
-        const name = file.name;
+        const savedFile = await this.fileService.getFile(id, token);
       
-        https.get(file.link!, function (file) {
-          res.set('Content-disposition', 'attachment; filename=' + encodeURI(name));
-       
-          file.pipe(res);
+        https.get(savedFile.link!, async function (file) {
+          res.set('Content-disposition', 'attachment; filename=' + encodeURI( savedFile.name));
+
+          await DataEncode.decryptWithStream(file, res, savedFile.secret);
         })
       } catch (e) {
         if (!(e instanceof HttpError)) return res.send(e);

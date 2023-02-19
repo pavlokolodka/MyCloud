@@ -26,7 +26,6 @@ export class FileRepository implements IFileRepository<IFile> {
           files = await this.database.find(query).sort({name: 1});
           break;
         case 'type':
-          console.log('here')
           files = await this.database.find(query).sort({type: 1});
           break;
         case 'date':

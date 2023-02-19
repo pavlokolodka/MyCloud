@@ -1,60 +1,80 @@
-const crypto = require('crypto');
-import {createReadStream, createWriteStream, promises} from 'fs';
+import * as crypto from 'crypto';
+import {createReadStream, createWriteStream, promises, ReadStream, statSync, WriteStream} from 'fs';
 import {pipeline} from 'stream/promises';
-const path = require('node:path');
+import * as path from 'node:path';
+import { Readable } from 'stream'
 
-function encrypt(input: string, output: string, secretData: string) {
-    const key = Buffer.from(crypto.createHash('sha256').update(secretData).digest('base64').substring(0, 32))
-    const iv = crypto.randomBytes(16);
-    const algorithm = 'aes-256-cbc';
-    // const algorithm = 'aes-256-gcm';
+const algorithm = 'aes-256-cbc';
+export default class DataEncode {
+    static async encrypt(input: string, secretData: string) {
+        const key = Buffer.from(crypto.createHash('sha256').update(secretData).digest('base64').substring(0, 32));
+        const iv = crypto.randomBytes(16);  
+        const output = input + '_dec';
+        const cipher = crypto.createCipheriv(algorithm, key, iv);
+        
+        await pipeline(
+            createReadStream(input),
+            cipher,
+            createWriteStream(output)
+        )
 
-    // const cipher = crypto.createCipheriv(algorithm, key, iv);
-    const cipher = crypto.createCipheriv(algorithm, key, 'somefadfsfsfsfsf');
+        await promises.writeFile(output, iv, {flag: 'a'})
 
-    return pipeline(
-        createReadStream(input),
-        cipher,
-        createWriteStream(output)
-    )
-    // const file = await promises.readFile(input);
-    // let encryptedData = cipher.update(file);
+        return output;
+    }
 
-    // encryptedData += cipher.final("hex");
-}
+    static async decrypt(input: string, output: string, secretData: string) {
+        const key = Buffer.from(crypto.createHash('sha256').update(secretData).digest('base64').substring(0, 32));
+        const chunks = []
+        let iv: Buffer | string;
+        const stats = statSync(input);
+        const fileSize = stats.size;
+        const stream = createReadStream(input, { start: fileSize - 16 });
+        
+        stream.on('data', (chunk) => {
+            chunks.push(chunk); 
+        });
 
-const path1 = path.join(__dirname, 'test.txt');
-const path2 = path.join(__dirname, 'test1.txt');
-const path3 = path.join(__dirname, 'test2.txt');
-encrypt(path1, path2, 'some')
-// console.log(path.join(__dirname, 'test.txt'))
+        stream.on('end', () => {
+            iv =  Buffer.concat(chunks);
+        })
 
-async function decrypt(input: string, output: string, secretData: string) {
-    const key = Buffer.from(crypto.createHash('sha256').update(secretData).digest('base64').substring(0, 32))
-    // const iv = crypto.randomBytes(16);
-    const algorithm = 'aes-256-cbc';
-    // const algorithm = 'aes-256-cbc';
+        stream.on('close', () => {
+            const decipher = crypto.createDecipheriv(algorithm, key, iv);
+          
+            pipeline(
+                createReadStream(input, { end: fileSize - 17 }),
+                decipher,
+                createWriteStream(output)
+            )
+        })
+    }
+
+    static async decryptWithStream(inputStream: ReadStream, outputStream: WriteStream, secretData: string) {
+        const key = Buffer.from(crypto.createHash('sha256').update(secretData).digest('base64').substring(0, 32));
+        let data: Buffer;
+        const chunks = [];
+        let iv: Buffer | string;
+
+        inputStream.on('data', (chunk) => {
+            chunks.push(chunk); 
+        });
+
+        inputStream.on('end', () => {
+            const rawData = Buffer.concat(chunks);
+            iv = rawData.slice(rawData.byteLength - 16, rawData.byteLength);
+            data = rawData.slice(0, rawData.byteLength - 16)
+            const decipher = crypto.createDecipheriv(algorithm, key, iv);
+            const readable = new Readable()
+            readable._read = () => {} 
+            readable.push(data)
+            readable.push(null)
     
-    // let iv: Buffer | string;
-    // const stream = createReadStream(input, { start: 0, end: 16 });
-    // stream.on('data', (chunk) => {
-    //     iv += chunk as Buffer;
-    // }
-    // const file = await promises.readFile(input);
-    // const iv = file.slice(0, 16);
-    const decipher = crypto.createDecipheriv(algorithm, key, 'somefadfsfsfsfsf');
-
-    // const final = createWriteStream(output);
-    // createReadStream(input, { start: 16}).pipe(cipher).pipe(final)
-    // const data = file.slice(16)
-    // let decryptedData = decipher.update(data);
-    // decryptedData += decipher.final();
-
-    return pipeline(
-        createReadStream(input),
-        decipher,
-        createWriteStream(output)
-    )
+            pipeline(
+                readable,
+                decipher,
+                outputStream
+            ) 
+        })
+    }
 }
-
-decrypt(path2, path3, 'some')
