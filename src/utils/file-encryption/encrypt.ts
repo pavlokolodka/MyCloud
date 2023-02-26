@@ -1,7 +1,6 @@
 import * as crypto from 'crypto';
 import {createReadStream, createWriteStream, promises, ReadStream, statSync, WriteStream} from 'fs';
 import {pipeline} from 'stream/promises';
-import * as path from 'node:path';
 import { Readable } from 'stream'
 
 const algorithm = 'aes-256-cbc';
@@ -25,13 +24,13 @@ export default class DataEncode {
 
     static async decrypt(input: string, output: string, secretData: string) {
         const key = Buffer.from(crypto.createHash('sha256').update(secretData).digest('base64').substring(0, 32));
-        const chunks = []
+        const chunks:  Uint8Array[] = []
         let iv: Buffer | string;
         const stats = statSync(input);
         const fileSize = stats.size;
         const stream = createReadStream(input, { start: fileSize - 16 });
         
-        stream.on('data', (chunk) => {
+        stream.on('data', (chunk: Buffer) => {
             chunks.push(chunk); 
         });
 
@@ -53,10 +52,10 @@ export default class DataEncode {
     static async decryptWithStream(inputStream: ReadStream, outputStream: WriteStream, secretData: string) {
         const key = Buffer.from(crypto.createHash('sha256').update(secretData).digest('base64').substring(0, 32));
         let data: Buffer;
-        const chunks = [];
+        const chunks:  Uint8Array[] = [];
         let iv: Buffer | string;
 
-        inputStream.on('data', (chunk) => {
+        inputStream.on('data', (chunk: Buffer) => {
             chunks.push(chunk); 
         });
 

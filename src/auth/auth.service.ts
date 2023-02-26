@@ -59,8 +59,8 @@ export class AuthService {
   public refreshTokens(rawToken: string) {
     const payload = this.getPayload(rawToken);
 
-    const token = jwt.sign({email: payload}, secretKey, { expiresIn: '1h' }); 
-    const refreshToken = jwt.sign({email: payload}, refreshSecretKey, { expiresIn: '2h' });
+    const token = jwt.sign({email: payload}, secretKey, { expiresIn: '1d' }); 
+    const refreshToken = jwt.sign({email: payload}, refreshSecretKey, { expiresIn: '2d' });
 
     return {token, refreshToken};
   }

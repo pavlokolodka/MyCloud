@@ -32,7 +32,7 @@ export class FileRepository implements IFileRepository<IFile> {
           files = await this.database.find(query).sort({date: 1});
           break;
         default:
-          files = await this.database.find(query);//.populate('childs').populate('parent');
+          files = await this.database.find(query);
           break;
     }
     return files;
@@ -45,7 +45,6 @@ export class FileRepository implements IFileRepository<IFile> {
   public async getOne(query: object, userId: mongoose.Types.ObjectId) {
     try {
       const file = await this.database.findOne(query).where('userId').equals(userId)
-      // const file = await this.database.findOne(query)//.populate('parent')//.populate('childs');
       return file;
     } catch (e) {
       throw new HttpError('can not get file', 500)
@@ -77,6 +76,4 @@ export class FileRepository implements IFileRepository<IFile> {
       throw new HttpError('update error', 500)
     }
   }
-
- 
 }
