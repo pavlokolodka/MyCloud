@@ -1,11 +1,11 @@
-import express, { Router, Request, Response } from "express";
+import { Router, Request, Response } from "express";
 import { HttpError } from "../utils/Error";
 import FileService from './files.service';
 import https from "https"
 import { uploadMiddlware } from "../middleware/uploadMiddleware";
 import { ICreateDirectoryDto } from "./dto/create-directory.dto";
 import { IGetFilesDto } from "./dto/get-files.dto";
-import { directoryValidation } from "../middleware/validator";
+import { directoryValidation, updateFileValidation } from "../middleware/validator";
 import { validationResult } from "express-validator";
 import DataEncode from "../utils/file-encryption/encrypt";
 
@@ -26,11 +26,11 @@ class FileController {
         const id = req.query.id as string;
         const token = req.headers['authorization']
        
-        if (!token) throw new HttpError('Invalid JWT token', 401);
+        if (!token) throw new HttpError('token is required', 401);
 
         if (!id) throw new HttpError('file id not passed', 400);
      
-        const savedFile = await this.fileService.getFile(id, token);
+        const savedFile = await this.fileService.download(id, token);
       
         https.get(savedFile.link!, async function (file) {
           res.set('Content-disposition', 'attachment; filename=' + encodeURI( savedFile.name));
@@ -48,7 +48,7 @@ class FileController {
       try {
         const token = req.headers['authorization']
        
-        if (!token) throw new HttpError('Invalid JWT token', 401)
+        if (!token) throw new HttpError('token is required', 401)
        
         const {sortBy, parent}: IGetFilesDto = req.query as unknown as IGetFilesDto;
         const files = await this.fileService.getAll(sortBy, token, parent);
@@ -72,7 +72,7 @@ class FileController {
         const {name, parent}: ICreateDirectoryDto = req.body;
         const token = req.headers['authorization']
       
-        if (!token) throw new HttpError('Invalid JWT token', 401)
+        if (!token) throw new HttpError('token is required', 401)
         
         const file = await this.fileService.createDirectory(name, token, parent); 
         return res.send(file);
@@ -87,7 +87,7 @@ class FileController {
       try {
         const token = req.headers['authorization']
        
-        if (!token) throw new HttpError('Invalid JWT token', 401)
+        if (!token) throw new HttpError('token is required', 401)
         
         const reqFile: any = req.files?.file;
         const parent = req.fields?.parent as string;
@@ -104,17 +104,33 @@ class FileController {
     });
 
     
+    // update file
+    this.router.patch(`${this.path}/:id/update`, updateFileValidation, async (req: Request, res: Response) => {
+      try {
+        const {parentId, name} = req.body;
+        const fileId = req.params.id;
+        const token = req.headers['authorization']
+       
+        if (!token) throw new HttpError('token is required', 401);
 
-    // this.router.put(`${this.path}/:id/update`, async (req, res) => {
-    //   // const file = await this.fileService.update(req);
-      
-    // });
+        if (!fileId) throw new HttpError('file id not passed', 400);
+        
+        if (!parentId && !name) throw new HttpError('name or parent is required', 400);
+       
+        const updatedFile = await this.fileService.update(fileId, token, name, parentId);
+
+        return res.send(updatedFile);
+      } catch (e) {
+        if (!(e instanceof HttpError)) return res.send(e);
+        return res.status(e.status).send({message: e.message, status: e.status})        
+      }  
+    });
 
     this.router.delete(`${this.path}/:id/delete`, async (req: Request, res: Response) => {
       try {        
         const token = req.headers['authorization'];
        
-        if (!token) throw new HttpError('Invalid JWT token', 401);
+        if (!token) throw new HttpError('token is required', 401);
 
         const id = req.params?.id;
        

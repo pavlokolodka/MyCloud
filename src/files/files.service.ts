@@ -15,7 +15,8 @@ import DataEncode from "../utils/file-encryption/encrypt";
 
 
 class FileService {
-  private fileRepo: IFileRepository<IFile>
+  private fileRepo: IFileRepository<IFile>;
+
   constructor(
     private botService = new BotService(),
     private readonly authService = new AuthService(),
@@ -28,9 +29,7 @@ class FileService {
     const user = await this.getUser(token);
     
     if (parent) {
-      const isValidId = isValidObjectId(parent);
-
-      if (!isValidId) throw new HttpError('parent id is not valid', 400);
+      const parentDirectory = await this.getFileParent(parent, user);
     } 
    
     const files = await this.fileRepo.getAll({parent: parent, userId: user._id}, sort);
@@ -42,12 +41,7 @@ class FileService {
     return files;
   }
 
-  async getLink(id: string) {
-    const link = await this.botService.getLink(id);
-    return link;
-  }
-  
-  async getFile(id: string, token: string) {
+  async getOne(id: string, token: string) {
     const user = await this.getUser(token);
     const isValidId = isValidObjectId(id);
     
@@ -56,6 +50,13 @@ class FileService {
     const file = await this.fileRepo.getOne({_id: id}, user._id!);
    
     if (!file) throw new HttpError('Can not get file', 500);
+
+    return file;
+  }
+  
+  async download(id: string, token: string) {
+    const file = await this.getOne(id, token);
+    const user = await this.getUser(token);
     
     if (file.type === 'directory') throw new HttpError('can not get folder', 400);
 
@@ -106,13 +107,7 @@ class FileService {
       return file;
     }
 
-    const isValidId = isValidObjectId(parent);
-
-    if (!isValidId) throw new HttpError('parent id is not valid', 400);
-   
-    const fileParent = await this.fileRepo.getOne({_id: parent}, user._id!);
-
-    if (!fileParent || fileParent.type !== 'directory') throw new HttpError('directory not exist', 404) 
+    const fileParent = await this.getFileParent(parent, user);
    
     const file = await this.fileRepo.create({
       name: reqFile.name,
@@ -140,17 +135,9 @@ class FileService {
       return directory;
     }
     
-    const isValidId = isValidObjectId(parent);
-
-    if (!isValidId) throw new HttpError('parent id is not valid', 400);
-
-    const parentId = new mongoose.Types.ObjectId(parent); 
-   
-    const parentDirectory = await this.fileRepo.getOne({_id: parentId}, user._id!);
+    const parentDirectory = await this.getFileParent(parent, user);
     
-    if (!parentDirectory) throw new HttpError('parent directory not exist', 404);
-    
-    const directory = await this.fileRepo.create({name, type, parent: parentId, userId: user._id});
+    const directory = await this.fileRepo.create({name, type, parent: parentDirectory._id, userId: user._id});
 
     parentDirectory?.childs?.push(directory._id);
     await parentDirectory.save?.();
@@ -158,6 +145,67 @@ class FileService {
     return directory;
   }
 
+  async update(fileId: string, token: string, name: string, parentId: string) {  
+    const file = await this.getOne(fileId, token);
+    const user = await this.getUser(token);
+
+    if (name && parentId) {
+      const newParentDirectory = await this.getFileParent(parentId, user);
+
+      if (file.parent) {
+        const parentDirectory = await this.getFileParent(String(file.parent), user);
+        let index = parentDirectory.childs?.indexOf(file._id) as unknown as number;
+        const array = parentDirectory.childs!;
+
+        while (index !== -1) {
+          parentDirectory.childs?.splice(index, 1)
+          index = array.indexOf(file._id);
+        }
+  
+        await parentDirectory.save?.()
+      }
+      
+      newParentDirectory.childs?.push(file._id);
+      await newParentDirectory.save?.();
+
+      file.parent = newParentDirectory._id;
+      file.name = name + '.' + file.type;
+      const updatedFile = await file.save?.();
+      
+      return updatedFile;
+    }
+
+    if (name) {
+      file.name = name + '.' + file.type;
+      const updatedFile = await file.save?.();
+      
+      return updatedFile;
+    }
+
+    const newParentDirectory = await this.getFileParent(parentId, user);
+
+    if (file.parent) {
+      const parentDirectory = await this.getFileParent(String(file.parent), user);
+      let index = parentDirectory.childs?.indexOf(file._id) as unknown as number;
+      const array = parentDirectory.childs!;
+      
+      while (index !== -1) {
+        parentDirectory.childs?.splice(index, 1)
+        index = array.indexOf(file._id);
+      }
+
+      await parentDirectory.save?.()
+    }
+
+   
+    newParentDirectory.childs?.push(file._id);
+    await newParentDirectory.save?.();
+
+    file.parent = newParentDirectory._id;  
+    const updatedFile = await file.save?.();
+    
+    return updatedFile;
+  }
 
   async delete(id: string, token: string) {
     const user = await this.getUser(token);
@@ -174,6 +222,18 @@ class FileService {
     const deletedFile = await this.fileRepo.delete({_id: id, userId: user._id});
   
     return deletedFile;
+  }
+
+  async getFileParent(parentId: string, user: IUser) {
+    const isValidId = isValidObjectId(parentId);
+
+    if (!isValidId) throw new HttpError('parent id is not valid', 400);
+   
+    const fileParent = await this.fileRepo.getOne({_id: parentId}, user._id!);
+
+    if (!fileParent || fileParent.type !== 'directory') throw new HttpError('such directory not exist', 404);
+    
+    return fileParent;
   }
  
   private async deleteChilds(file: IFile, user: IUser) {
@@ -230,6 +290,11 @@ class FileService {
     if (!candidate) throw new HttpError('user not found', 404);
 
     return candidate;
+  }
+
+  private async getLink(id: string) {
+    const link = await this.botService.getLink(id);
+    return link;
   }
 }
 

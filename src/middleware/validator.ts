@@ -26,3 +26,9 @@ export const tokenValidation = [
 export const directoryValidation = [
   body(`name`).isString().notEmpty().withMessage('directory name not passed'),
 ]
+
+
+export const updateFileValidation = [
+  body(`name`).optional().isString().notEmpty().withMessage('name must be not empty string'),
+  body(`parentId`).optional().isString().notEmpty().withMessage('parent must be not empty valid directory id type of string'),
+]
