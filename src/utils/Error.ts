@@ -1,3 +1,15 @@
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     HttpError:
+ *       type: object
+ *       properties:
+ *         status:
+ *           type: integer
+ *         error:
+ *           type: string
+ */
 export class HttpError extends Error {
   public status: number;
 

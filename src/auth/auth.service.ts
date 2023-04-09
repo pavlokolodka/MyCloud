@@ -10,17 +10,17 @@ export class AuthService {
   public async login(email: string, password: string) {
     const candidate = await this.userService.checkEmail(email);
 
-    if (!candidate) throw new HttpError(`user with email ${email} doesn't exist`, 404);
+    if (!candidate) throw new HttpError(`User with email ${email} doesn't exist`, 404);
 
     const isEqualPassword = await bcrypt.compare(password, candidate.password);
 
-    if (!isEqualPassword) throw new HttpError('wrong password', 400);
+    if (!isEqualPassword) throw new HttpError('Incorrect email or password', 422);
 
     const token = jwt.sign({email: candidate.email}, secretKey, { expiresIn: '1h' }); 
     const refreshToken = jwt.sign({email: candidate.email}, refreshSecretKey, { expiresIn: '2h' }); 
 
     const user = {
-      token: token,
+      accessToken: token,
       refreshToken: refreshToken,
       user: {
       name: candidate.name,
@@ -33,7 +33,7 @@ export class AuthService {
   public async register(name: string, email: string, password: string) {
     const candidate = await this.userService.checkEmail(email);
     
-    if (candidate) throw new HttpError(`user with email ${email} aready exist`, 400)
+    if (candidate) throw new HttpError(`User with email ${email} aready exist`, 409)
     
     const hashPassword = await bcrypt.hash(password, 10);
 
@@ -47,7 +47,7 @@ export class AuthService {
     const refreshToken = jwt.sign({email: user.email}, refreshSecretKey, { expiresIn: '2h' });
 
     return {
-      token: token,
+      accessToken: token,
       refreshToken: refreshToken,
       user: {
         name: user.name,
@@ -62,7 +62,7 @@ export class AuthService {
     const token = jwt.sign({email: payload}, secretKey, { expiresIn: '1d' }); 
     const refreshToken = jwt.sign({email: payload}, refreshSecretKey, { expiresIn: '2d' });
 
-    return {token, refreshToken};
+    return {accessToken: token, refreshToken};
   }
 
   public getPayload(token: string, refreshToken = true) {
