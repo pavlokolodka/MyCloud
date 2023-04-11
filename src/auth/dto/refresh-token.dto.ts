@@ -12,5 +12,5 @@
  *         - refreshToken
  */
 export interface IRefreshTokenDto {
-    refreshToken: string
+  refreshToken: string;
 }

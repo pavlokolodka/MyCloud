@@ -1,5 +1,5 @@
 export type FileOptions = {
-    filename: string,
-    type: string,
-    secret: string,
-}
+  filename: string;
+  type: string;
+  secret: string;
+};

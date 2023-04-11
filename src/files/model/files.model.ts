@@ -1,6 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { IFile } from './files.interface'
-
+import { IFile } from './files.interface';
 
 /**
  * @swagger
@@ -52,43 +51,44 @@ import { IFile } from './files.interface'
 const fileSchema = new Schema<IFile>({
   name: {
     type: String,
-    require: true
+    require: true,
   },
   storageId: {
-    type: String
+    type: String,
   },
   link: {
-    type: String
+    type: String,
   },
   size: {
     type: Number,
-    require: true
+    require: true,
   },
   type: {
     type: String,
-    require: true
+    require: true,
   },
   userId: {
     type: Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'User',
   },
   parent: {
     type: Schema.Types.ObjectId,
-    ref: 'File'
+    ref: 'File',
   },
-  childs: [{
-    type: Schema.Types.ObjectId,
-    ref: 'File'
-  }],
+  childs: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'File',
+    },
+  ],
   date: {
     type: Date,
-    default: Date.now
+    default: Date.now,
   },
   updatedAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
-
 
 export const File = model<IFile>('File', fileSchema);
