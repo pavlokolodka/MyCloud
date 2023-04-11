@@ -11,7 +11,8 @@
     "lint:check": "npm run lint",
     "lint:fix": "eslint --ext .ts src --fix",
     "prettier": "prettier --write \"**/*.ts\"",
-    "format": "npm run lint:fix && npm run prettier"
+    "format": "npm run lint:fix && npm run prettier",
+    "prepare": "husky install"
   },
   "keywords": [],
   "author": "Pavlo Kolodka",
@@ -44,6 +45,7 @@
     "eslint": "^8.38.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-prettier": "^4.2.1",
+    "husky": "^8.0.3",
     "lint-staged": "^13.2.1",
     "nodemon": "^2.0.19",
     "prettier": "^2.8.7",
