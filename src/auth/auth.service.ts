@@ -1,8 +1,8 @@
-import { UserService } from "../users/users.service";
+import { UserService } from '../users/users.service';
 import bcrypt from 'bcrypt';
-import { HttpError } from "../utils/Error";
-import * as jwt from 'jsonwebtoken'
-import { refreshSecretKey, secretKey } from "./constants";
+import { HttpError } from '../utils/Error';
+import * as jwt from 'jsonwebtoken';
+import { refreshSecretKey, secretKey } from './constants';
 
 export class AuthService {
   constructor(private userService = new UserService()) {}
@@ -10,41 +10,55 @@ export class AuthService {
   public async login(email: string, password: string) {
     const candidate = await this.userService.checkEmail(email);
 
-    if (!candidate) throw new HttpError(`User with email ${email} doesn't exist`, 404);
+    if (!candidate)
+      throw new HttpError(`User with email ${email} doesn't exist`, 404);
 
     const isEqualPassword = await bcrypt.compare(password, candidate.password);
 
-    if (!isEqualPassword) throw new HttpError('Incorrect email or password', 422);
+    if (!isEqualPassword)
+      throw new HttpError('Incorrect email or password', 422);
 
-    const token = jwt.sign({email: candidate.email}, secretKey, { expiresIn: '1h' }); 
-    const refreshToken = jwt.sign({email: candidate.email}, refreshSecretKey, { expiresIn: '2h' }); 
+    const token = jwt.sign({ email: candidate.email }, secretKey, {
+      expiresIn: '1h',
+    });
+    const refreshToken = jwt.sign(
+      { email: candidate.email },
+      refreshSecretKey,
+      { expiresIn: '2h' },
+    );
 
     const user = {
       accessToken: token,
       refreshToken: refreshToken,
       user: {
-      name: candidate.name,
-      email: candidate.email,
-    }};
+        name: candidate.name,
+        email: candidate.email,
+      },
+    };
 
     return user;
   }
 
   public async register(name: string, email: string, password: string) {
     const candidate = await this.userService.checkEmail(email);
-    
-    if (candidate) throw new HttpError(`User with email ${email} aready exist`, 409)
-    
+
+    if (candidate)
+      throw new HttpError(`User with email ${email} aready exist`, 409);
+
     const hashPassword = await bcrypt.hash(password, 10);
 
     const user = await this.userService.create({
       name,
       email,
-      password: hashPassword
-    })
+      password: hashPassword,
+    });
 
-    const token = jwt.sign({email: user.email}, secretKey, { expiresIn: '1h' }); 
-    const refreshToken = jwt.sign({email: user.email}, refreshSecretKey, { expiresIn: '2h' });
+    const token = jwt.sign({ email: user.email }, secretKey, {
+      expiresIn: '1h',
+    });
+    const refreshToken = jwt.sign({ email: user.email }, refreshSecretKey, {
+      expiresIn: '2h',
+    });
 
     return {
       accessToken: token,
@@ -52,17 +66,19 @@ export class AuthService {
       user: {
         name: user.name,
         email: user.email,
-      }
+      },
     };
   }
 
   public refreshTokens(rawToken: string) {
     const payload = this.getPayload(rawToken);
 
-    const token = jwt.sign({email: payload}, secretKey, { expiresIn: '1d' }); 
-    const refreshToken = jwt.sign({email: payload}, refreshSecretKey, { expiresIn: '2d' });
+    const token = jwt.sign({ email: payload }, secretKey, { expiresIn: '1d' });
+    const refreshToken = jwt.sign({ email: payload }, refreshSecretKey, {
+      expiresIn: '2d',
+    });
 
-    return {accessToken: token, refreshToken};
+    return { accessToken: token, refreshToken };
   }
 
   public getPayload(token: string, refreshToken = true) {
@@ -71,21 +87,24 @@ export class AuthService {
 
       if (!refreshToken) {
         payload = jwt.verify(token, secretKey) as unknown as jwt.JwtPayload;
-   
+
         return payload.email;
       }
 
-      payload = jwt.verify(token, refreshSecretKey) as unknown as jwt.JwtPayload;
-   
+      payload = jwt.verify(
+        token,
+        refreshSecretKey,
+      ) as unknown as jwt.JwtPayload;
+
       return payload.email;
     } catch (error) {
-      throw new HttpError('Invalid JWT token', 401)
+      throw new HttpError('Invalid JWT token', 401);
     }
   }
 
   public getPayloadFromRawToken(rawToken: string) {
     const [bearer, token] = rawToken.split(' ');
-   
+
     if (!bearer || bearer !== 'Bearer') {
       throw new HttpError('Invalid token format', 401);
     }
@@ -93,7 +112,7 @@ export class AuthService {
     if (!token) {
       throw new HttpError('Invalid auth token', 401);
     }
-    
+
     return this.getPayload(token, false);
   }
 }

@@ -13,7 +13,7 @@
  *           description: The ID of the parent directory. If not provided, the new directory will be created in the root directory.
  *       required:
  *         - name
- */ 
+ */
 export interface ICreateDirectoryDto {
   name: string;
   parent?: string;

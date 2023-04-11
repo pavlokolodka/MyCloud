@@ -1,6 +1,6 @@
 export enum FileType {
   JPEG = 'image/jpeg',
-  PNG ='image/png',
+  PNG = 'image/png',
   JPG = 'image/jpg',
   GIF = 'image/gif',
   JFIF = 'application/octet-stream',

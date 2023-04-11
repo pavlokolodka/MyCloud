@@ -1,12 +1,15 @@
-import { Router, Request, Response } from "express";
-import { HttpError } from "../utils/Error";
-import { AuthService } from "./auth.service";
+import { Router, Request, Response } from 'express';
+import { HttpError } from '../utils/Error';
+import { AuthService } from './auth.service';
 import { validationResult } from 'express-validator';
-import { isValidUser, loginValidation, tokenValidation } from "../middleware/validator";
-import { IRegisterUserDto } from "./dto/register.dto";
-import { ILoginDto } from "./dto/login.dto";
-import { IRefreshTokenDto } from "./dto/refresh-token.dto";
-
+import {
+  isValidUser,
+  loginValidation,
+  tokenValidation,
+} from '../middleware/validator';
+import { IRegisterUserDto } from './dto/register.dto';
+import { ILoginDto } from './dto/login.dto';
+import { IRefreshTokenDto } from './dto/refresh-token.dto';
 
 /**
  * @swagger
@@ -18,7 +21,7 @@ export class AuthController {
   private path = '/auth';
   public router = Router();
   private authService: AuthService;
- 
+
   constructor() {
     this.authService = new AuthService();
     this.intializeRoutes();
@@ -105,23 +108,30 @@ export class AuthController {
      *                   status: 500
      *                   error: Internal Server Error
      */
-    this.router.post(`${this.path}/login`, loginValidation, async (req: Request, res: Response) => {
-      try {
-        const errors = validationResult(req);
+    this.router.post(
+      `${this.path}/login`,
+      loginValidation,
+      async (req: Request, res: Response) => {
+        try {
+          const errors = validationResult(req);
 
-        if (!errors.isEmpty()) {
-          throw new HttpError(`${errors.array()[0].msg}`, 400);
+          if (!errors.isEmpty()) {
+            throw new HttpError(`${errors.array()[0].msg}`, 400);
+          }
+
+          const { email, password }: ILoginDto = req.body;
+          const newUser = await this.authService.login(email, password);
+
+          return res.send(newUser);
+        } catch (e) {
+          if (!(e instanceof HttpError))
+            return res.status(500).send('Internal server error');
+          return res
+            .status(e.status)
+            .send({ message: e.message, status: e.status });
         }
-
-        const {email, password}: ILoginDto = req.body;  
-        const newUser = await this.authService.login(email, password);
-
-        return res.send(newUser);
-      } catch (e) {
-        if (!(e instanceof HttpError)) return res.status(500).send('Internal server error');
-        return res.status(e.status).send({message: e.message, status: e.status});
-      }
-    })
+      },
+    );
 
     /**
      * @swagger
@@ -131,7 +141,7 @@ export class AuthController {
      *     tags: [Auth]
      *     requestBody:
      *       required: true
-     *       description: The request body for creating a new user type of IRegisterUserDto. 
+     *       description: The request body for creating a new user type of IRegisterUserDto.
      *       content:
      *         application/json:
      *           schema:
@@ -169,7 +179,7 @@ export class AuthController {
      *               overrides:
      *                 value:
      *                   status: 400
-     *                   error: Validation error 
+     *                   error: Validation error
      *       409:
      *         description: Conflict
      *         content:
@@ -180,7 +190,7 @@ export class AuthController {
      *               overrides:
      *                 value:
      *                   status: 409
-     *                   error: User with email ${email} aready exist 
+     *                   error: User with email ${email} aready exist
      *       500:
      *         description: Internal Server Error
      *         content:
@@ -193,24 +203,35 @@ export class AuthController {
      *                   status: 500
      *                   error: Internal server error
      */
-    this.router.post(`${this.path}/register`, isValidUser, async (req: Request, res: Response) => {
-      try {
-        const errors = validationResult(req);
+    this.router.post(
+      `${this.path}/register`,
+      isValidUser,
+      async (req: Request, res: Response) => {
+        try {
+          const errors = validationResult(req);
 
-        if (!errors.isEmpty()) {
-          throw new HttpError(`${errors.array()[0].msg}`, 400);
+          if (!errors.isEmpty()) {
+            throw new HttpError(`${errors.array()[0].msg}`, 400);
+          }
+
+          const { name, email, password }: IRegisterUserDto = req.body;
+
+          const newUser = await this.authService.register(
+            name,
+            email,
+            password,
+          );
+
+          return res.send(newUser);
+        } catch (e) {
+          if (!(e instanceof HttpError))
+            return res.status(500).send('Internal server error');
+          return res
+            .status(e.status)
+            .send({ message: e.message, status: e.status });
         }
-
-        const {name, email, password}: IRegisterUserDto = req.body;  
-    
-        const newUser = await this.authService.register(name, email, password);
-
-        return res.send(newUser);
-      } catch (e) {
-        if (!(e instanceof HttpError)) return res.status(500).send('Internal server error');
-        return res.status(e.status).send({message: e.message, status: e.status});
-      }
-    })
+      },
+    );
 
     /**
      * @swagger
@@ -220,7 +241,7 @@ export class AuthController {
      *     tags: [Auth]
      *     requestBody:
      *       required: true
-     *       description: The request body for refreshing access and refresh tokens type of IRefreshTokenDto. 
+     *       description: The request body for refreshing access and refresh tokens type of IRefreshTokenDto.
      *       content:
      *         application/json:
      *           schema:
@@ -273,23 +294,31 @@ export class AuthController {
      *                   status: 500
      *                   error: Internal server error
      */
-    this.router.post(`${this.path}/refresh-tokens`, tokenValidation, async (req: Request, res: Response) => {
-      try {
-        const errors = validationResult(req);
+    this.router.post(
+      `${this.path}/refresh-tokens`,
+      tokenValidation,
+      async (req: Request, res: Response) => {
+        try {
+          const errors = validationResult(req);
 
-        if (!errors.isEmpty()) {
-          throw new HttpError(`${errors.array()[0].msg}`, 400);
+          if (!errors.isEmpty()) {
+            throw new HttpError(`${errors.array()[0].msg}`, 400);
+          }
+
+          const { refreshToken }: IRefreshTokenDto = req.body;
+          const refreshTokens = this.authService.refreshTokens(refreshToken);
+
+          return res.send(refreshTokens);
+        } catch (error) {
+          if (!(error instanceof HttpError))
+            return res.status(500).send('Internal server error');
+
+          return res
+            .set('WWW-Authenticate', 'Bearer')
+            .status(error.status)
+            .send({ message: error.message, status: error.status });
         }
-
-        const {refreshToken}: IRefreshTokenDto = req.body;
-        const refreshTokens = this.authService.refreshTokens(refreshToken);
-
-        return res.send(refreshTokens);
-      } catch (error) {
-        if (!(error instanceof HttpError)) return res.status(500).send('Internal server error');
-        
-        return res.set('WWW-Authenticate', 'Bearer').status(error.status).send({message: error.message, status: error.status});
-      }
-    })
+      },
+    );
   }
 }

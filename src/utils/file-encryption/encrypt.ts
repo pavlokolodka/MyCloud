@@ -1,79 +1,101 @@
 import * as crypto from 'crypto';
-import {createReadStream, createWriteStream, promises, ReadStream, statSync, WriteStream} from 'fs';
-import {pipeline} from 'stream/promises';
-import { Readable } from 'stream'
+import {
+  createReadStream,
+  createWriteStream,
+  promises,
+  ReadStream,
+  statSync,
+  WriteStream,
+} from 'fs';
+import { pipeline } from 'stream/promises';
+import { Readable } from 'stream';
 
 const algorithm = 'aes-256-cbc';
 export default class DataEncode {
-    static async encrypt(input: string, secretData: string) {
-        const key = Buffer.from(crypto.createHash('sha256').update(secretData).digest('base64').substring(0, 32));
-        const iv = crypto.randomBytes(16);  
-        const output = input + '_dec';
-        const cipher = crypto.createCipheriv(algorithm, key, iv);
-        
-        await pipeline(
-            createReadStream(input),
-            cipher,
-            createWriteStream(output)
-        )
+  static async encrypt(input: string, secretData: string) {
+    const key = Buffer.from(
+      crypto
+        .createHash('sha256')
+        .update(secretData)
+        .digest('base64')
+        .substring(0, 32),
+    );
+    const iv = crypto.randomBytes(16);
+    const output = input + '_dec';
+    const cipher = crypto.createCipheriv(algorithm, key, iv);
 
-        await promises.writeFile(output, iv, {flag: 'a'})
+    await pipeline(createReadStream(input), cipher, createWriteStream(output));
 
-        return output;
-    }
+    await promises.writeFile(output, iv, { flag: 'a' });
 
-    static async decrypt(input: string, output: string, secretData: string) {
-        const key = Buffer.from(crypto.createHash('sha256').update(secretData).digest('base64').substring(0, 32));
-        const chunks:  Uint8Array[] = []
-        let iv: Buffer | string;
-        const stats = statSync(input);
-        const fileSize = stats.size;
-        const stream = createReadStream(input, { start: fileSize - 16 });
-        
-        stream.on('data', (chunk: Buffer) => {
-            chunks.push(chunk); 
-        });
+    return output;
+  }
 
-        stream.on('end', () => {
-            iv =  Buffer.concat(chunks);
-        })
+  static async decrypt(input: string, output: string, secretData: string) {
+    const key = Buffer.from(
+      crypto
+        .createHash('sha256')
+        .update(secretData)
+        .digest('base64')
+        .substring(0, 32),
+    );
+    const chunks: Uint8Array[] = [];
+    let iv: Buffer | string;
+    const stats = statSync(input);
+    const fileSize = stats.size;
+    const stream = createReadStream(input, { start: fileSize - 16 });
 
-        stream.on('close', () => {
-            const decipher = crypto.createDecipheriv(algorithm, key, iv);
-          
-            pipeline(
-                createReadStream(input, { end: fileSize - 17 }),
-                decipher,
-                createWriteStream(output)
-            )
-        })
-    }
+    stream.on('data', (chunk: Buffer) => {
+      chunks.push(chunk);
+    });
 
-    static async decryptWithStream(inputStream: ReadStream, outputStream: WriteStream, secretData: string) {
-        const key = Buffer.from(crypto.createHash('sha256').update(secretData).digest('base64').substring(0, 32));
-        let data: Buffer;
-        const chunks:  Uint8Array[] = [];
-        let iv: Buffer | string;
+    stream.on('end', () => {
+      iv = Buffer.concat(chunks);
+    });
 
-        inputStream.on('data', (chunk: Buffer) => {
-            chunks.push(chunk); 
-        });
+    stream.on('close', () => {
+      const decipher = crypto.createDecipheriv(algorithm, key, iv);
 
-        inputStream.on('end', () => {
-            const rawData = Buffer.concat(chunks);
-            iv = rawData.slice(rawData.byteLength - 16, rawData.byteLength);
-            data = rawData.slice(0, rawData.byteLength - 16)
-            const decipher = crypto.createDecipheriv(algorithm, key, iv);
-            const readable = new Readable()
-            readable._read = () => {} 
-            readable.push(data)
-            readable.push(null)
-    
-            pipeline(
-                readable,
-                decipher,
-                outputStream
-            ) 
-        })
-    }
+      pipeline(
+        createReadStream(input, { end: fileSize - 17 }),
+        decipher,
+        createWriteStream(output),
+      );
+    });
+  }
+
+  static async decryptWithStream(
+    inputStream: ReadStream,
+    outputStream: WriteStream,
+    secretData: string,
+  ) {
+    const key = Buffer.from(
+      crypto
+        .createHash('sha256')
+        .update(secretData)
+        .digest('base64')
+        .substring(0, 32),
+    );
+    let data: Buffer;
+    const chunks: Uint8Array[] = [];
+    let iv: Buffer | string;
+
+    inputStream.on('data', (chunk: Buffer) => {
+      chunks.push(chunk);
+    });
+
+    inputStream.on('end', () => {
+      const rawData = Buffer.concat(chunks);
+      iv = rawData.slice(rawData.byteLength - 16, rawData.byteLength);
+      data = rawData.slice(0, rawData.byteLength - 16);
+      const decipher = crypto.createDecipheriv(algorithm, key, iv);
+      const readable = new Readable();
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      readable._read = () => {};
+      readable.push(data);
+      readable.push(null);
+
+      pipeline(readable, decipher, outputStream);
+    });
+  }
 }
