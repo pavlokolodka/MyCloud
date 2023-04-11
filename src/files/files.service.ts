@@ -1,5 +1,5 @@
-import { BotService } from '../bot/bot.service';
 import { unlink } from 'node:fs';
+import { BotService } from '../bot/bot.service';
 import { FileRepository } from './model/files.repository';
 import { isValidObjectId } from '../utils/isObjectId';
 import { HttpError } from '../utils/Error';

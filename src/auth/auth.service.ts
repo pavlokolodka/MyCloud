@@ -1,7 +1,7 @@
-import { UserService } from '../users/users.service';
 import bcrypt from 'bcrypt';
-import { HttpError } from '../utils/Error';
 import * as jwt from 'jsonwebtoken';
+import { UserService } from '../users/users.service';
+import { HttpError } from '../utils/Error';
 import { refreshSecretKey, secretKey } from './constants';
 
 export class AuthService {

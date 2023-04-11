@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
+import { validationResult } from 'express-validator';
 import { HttpError } from '../utils/Error';
 import { AuthService } from './auth.service';
-import { validationResult } from 'express-validator';
 import {
   isValidUser,
   loginValidation,

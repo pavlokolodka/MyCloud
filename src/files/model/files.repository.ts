@@ -1,8 +1,8 @@
+import mongoose from 'mongoose';
 import { HttpError } from '../../utils/Error';
 import { IFileRepository } from './files.repository-interface';
 import { IFile } from './files.interface';
 import { File } from './files.model';
-import mongoose from 'mongoose';
 
 export class FileRepository implements IFileRepository<IFile> {
   constructor(private database = File) {}

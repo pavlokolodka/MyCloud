@@ -1,9 +1,9 @@
 import express, { Request, Response } from 'express';
 import * as fs from 'fs';
 import path from 'path';
-import { ConnectToDb } from './database-connection';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJSDoc from 'swagger-jsdoc';
+import { ConnectToDb } from './database-connection';
 
 class Server {
   public app: express.Application;

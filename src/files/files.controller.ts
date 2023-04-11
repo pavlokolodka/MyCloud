@@ -1,7 +1,10 @@
 import { Router, Request, Response } from 'express';
+import https from 'https';
+import { validationResult } from 'express-validator';
+import { IncomingMessage } from 'http';
+import { ReadStream, WriteStream } from 'fs';
 import { HttpError } from '../utils/Error';
 import FileService from './files.service';
-import https from 'https';
 import { uploadMiddlware } from '../middleware/uploadMiddleware';
 import { ICreateDirectoryDto } from './dto/create-directory.dto';
 import { IGetFilesDto } from './dto/get-files.dto';
@@ -9,10 +12,7 @@ import {
   directoryValidation,
   updateFileValidation,
 } from '../middleware/validator';
-import { validationResult } from 'express-validator';
 import DataEncode from '../utils/file-encryption/encrypt';
-import { IncomingMessage } from 'http';
-import { ReadStream, WriteStream } from 'fs';
 
 /**
  * @swagger
