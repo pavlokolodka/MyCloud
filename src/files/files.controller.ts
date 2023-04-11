@@ -11,6 +11,8 @@ import {
 } from '../middleware/validator';
 import { validationResult } from 'express-validator';
 import DataEncode from '../utils/file-encryption/encrypt';
+import { IncomingMessage } from 'http';
+import { ReadStream, WriteStream } from 'fs';
 
 /**
  * @swagger
@@ -106,13 +108,17 @@ class FileController {
 
           const savedFile = await this.fileService.download(id, token);
 
-          https.get(savedFile.link!, async function (file) {
+          https.get(savedFile.link!, async function (file: IncomingMessage) {
             res.set(
               'Content-disposition',
               'attachment; filename=' + encodeURI(savedFile.name),
             );
 
-            await DataEncode.decryptWithStream(file, res, savedFile.secret);
+            await DataEncode.decryptWithStream(
+              file as unknown as ReadStream,
+              res as unknown as WriteStream,
+              savedFile.secret,
+            );
           });
         } catch (e) {
           if (!(e instanceof HttpError)) return res.send(e);

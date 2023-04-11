@@ -11,7 +11,8 @@
     },
     "plugins": [
       "@typescript-eslint",
-      "prettier"
+      "prettier",
+      "import"
     ],
     "extends": [
       "eslint:recommended",
@@ -19,7 +20,7 @@
       "prettier"
     ],
     "rules": {
-    
+      "import/order": ["error", {"groups": [["builtin", "external"]]}]
     }
   }
   
