@@ -13,6 +13,8 @@ import {
   updateFileValidation,
 } from '../middleware/validator';
 import DataEncode from '../utils/file-encryption/encrypt';
+import { UserService } from '../users/users.service';
+import { extractUserEmail } from '../middleware/auth';
 
 /**
  * @swagger
@@ -24,9 +26,11 @@ class FileController {
   private path = '/files';
   public router = Router();
   private fileService: FileService;
+  private userService: UserService;
 
   constructor() {
     this.fileService = new FileService();
+    this.userService = new UserService();
     this.intializeRoutes();
   }
 
@@ -181,24 +185,29 @@ class FileController {
      *                   status: 500
      *                   error: Internal server error
      */
-    this.router.get(this.path, async (req: Request, res: Response) => {
-      try {
-        const token = req.headers['authorization'];
+    this.router.get(
+      this.path,
+      extractUserEmail,
+      async (req: Request, res: Response) => {
+        try {
+          const token = req.headers['authorization'];
+          console.log(req.user.email);
+          if (!token)
+            throw new HttpError('Authorization token is required', 401);
 
-        if (!token) throw new HttpError('Authorization token is required', 401);
+          const { sortBy, parent }: IGetFilesDto =
+            req.query as unknown as IGetFilesDto;
+          const files = await this.fileService.getAll(sortBy, token, parent);
 
-        const { sortBy, parent }: IGetFilesDto =
-          req.query as unknown as IGetFilesDto;
-        const files = await this.fileService.getAll(sortBy, token, parent);
-
-        return res.send(files);
-      } catch (e: unknown) {
-        if (!(e instanceof HttpError)) return res.send(e);
-        return res
-          .status(e.status)
-          .send({ message: e.message, status: e.status });
-      }
-    });
+          return res.send(files);
+        } catch (e: unknown) {
+          if (!(e instanceof HttpError)) return res.send(e);
+          return res
+            .status(e.status)
+            .send({ message: e.message, status: e.status });
+        }
+      },
+    );
 
     /**
      * @swagger
