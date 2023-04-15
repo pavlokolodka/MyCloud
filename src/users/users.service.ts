@@ -1,3 +1,4 @@
+import { CreateUserDto } from './dto/create-user.dto';
 import { IUser } from './model/users.interface';
 import { UserRepository } from './model/users.repository';
 import { IUserRepository } from './model/users.repository-interface';
@@ -14,7 +15,7 @@ export class UserService {
     return user;
   }
 
-  public create(query: IUser) {
+  public create(query: CreateUserDto) {
     const user = this.userRepo.create(query);
     return user;
   }

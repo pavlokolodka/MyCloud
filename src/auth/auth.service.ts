@@ -54,10 +54,10 @@ export class AuthService {
     });
 
     const token = jwt.sign({ email: user.email }, secretKey, {
-      expiresIn: '1h',
+      expiresIn: '1d',
     });
     const refreshToken = jwt.sign({ email: user.email }, refreshSecretKey, {
-      expiresIn: '2h',
+      expiresIn: '2d',
     });
 
     return {
