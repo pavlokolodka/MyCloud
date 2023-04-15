@@ -42,11 +42,15 @@ class FileService {
   async getOne(id: string, userId: Types.ObjectId) {
     const isValidId = isValidObjectId(id);
 
-    if (!isValidId) throw new HttpError('file id is not valid', 400);
+    if (!isValidId) throw new HttpError('File id is not valid', 400);
 
-    const file = await this.fileRepo.getOne({ _id: id }, userId);
+    const file = await this.fileRepo.getOne({ _id: id });
 
-    if (!file) throw new HttpError('Can not get file', 500);
+    if (!file) throw new HttpError('File not found', 404);
+
+    if (String(file.userId) !== String(userId)) {
+      throw new HttpError('User not have permission to access this file', 403);
+    }
 
     return file;
   }
@@ -55,7 +59,7 @@ class FileService {
     const file = await this.getOne(id, userId);
 
     if (file.type === 'directory')
-      throw new HttpError('can not get folder', 400);
+      throw new HttpError('Can not get folder', 400);
 
     await this.checkLinkExp([file]);
 
@@ -237,13 +241,11 @@ class FileService {
   async delete(id: string, userId: Types.ObjectId) {
     const isValidId = isValidObjectId(id);
 
-    if (!isValidId) throw new HttpError('file id is not valid', 400);
+    if (!isValidId) throw new HttpError('File id is not valid', 400);
 
-    const file = await this.fileRepo.getOne({ _id: id }, userId);
+    const file = await this.getOne(id, userId);
 
-    if (!file) throw new HttpError('file not exist', 404);
-
-    file?.childs?.length
+    file.childs?.length
       ? Promise.all([
           this.deleteChilds(file, userId),
           this.deleteParent(file, userId),
@@ -261,19 +263,27 @@ class FileService {
   async getFileParent(parentId: string, userId: Types.ObjectId) {
     const isValidId = isValidObjectId(parentId);
 
-    if (!isValidId) throw new HttpError('parent id is not valid', 400);
+    if (!isValidId) throw new HttpError('Directory id is not valid', 400);
 
-    const fileParent = await this.fileRepo.getOne({ _id: parentId }, userId);
+    const fileParent = await this.fileRepo.getOne({ _id: parentId });
 
-    if (!fileParent || fileParent.type !== 'directory')
-      throw new HttpError('such directory not exist', 404);
+    if (!fileParent || fileParent.type !== 'directory') {
+      throw new HttpError('Directory not exist', 404);
+    }
+
+    if (String(fileParent.userId) !== String(userId)) {
+      throw new HttpError('User not have permission to access this file', 403);
+    }
 
     return fileParent;
   }
 
   private async deleteChilds(file: IFile, userId: Types.ObjectId) {
     file.childs?.forEach(async (file) => {
-      const isParent = await this.fileRepo.getOne({ _id: file }, userId);
+      const isParent = await this.fileRepo.getOneWithUser(
+        { _id: file },
+        userId,
+      );
 
       if (isParent?.childs?.length) await this.deleteChilds(isParent, userId);
 
@@ -311,7 +321,7 @@ class FileService {
     );
     const file = await this.botService.sendDocs(encryptedFilePath, fileOptions);
 
-    if (!file) throw new HttpError('internal server error', 500);
+    if (!file) throw new HttpError('Internal Server Error', 500);
 
     this.deleteFromDisk(encryptedFilePath);
 

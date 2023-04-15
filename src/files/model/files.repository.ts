@@ -39,7 +39,17 @@ export class FileRepository implements IFileRepository<IFile> {
     }
   }
 
-  public async getOne(query: object, userId: mongoose.Types.ObjectId) {
+  public async getOne(query: object) {
+    try {
+      const file = await this.database.findOne(query);
+
+      return file;
+    } catch (e) {
+      throw new HttpError('can not get file', 500);
+    }
+  }
+
+  public async getOneWithUser(query: object, userId: mongoose.Types.ObjectId) {
     try {
       const file = await this.database
         .findOne(query)

@@ -57,7 +57,7 @@ class FileController {
      *           application/octet-stream:
      *             schema:
      *               type: string
-     *       '400':
+     *       400:
      *         description: The ID parameter was not passed.
      *         content:
      *           application/json:
@@ -67,7 +67,7 @@ class FileController {
      *                 error:
      *                   type: string
      *                   example: 'ID parameter is missing'
-     *       '401':
+     *       401:
      *         description: The authorization token was not provided.
      *         content:
      *           application/json:
@@ -77,26 +77,34 @@ class FileController {
      *                 error:
      *                   type: string
      *                   example: 'Authorization token is required'
-     *       '404':
+     *       403:
+     *         description: Forbidden
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
+     *             examples:
+     *               overrides:
+     *                 value:
+     *                   status: 403
+     *                   error: User not have permission to access this file
+     *       404:
      *         description: The requested file could not be found.
      *         content:
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/HttpError'
-     *               properties:
-     *                 error:
-     *                   type: string
-     *                   example: 'File not found'
-     *       '500':
+     *             examples:
+     *               overrides:
+     *                 value:
+     *                   status: 404
+     *                   error: File not found
+     *       500:
      *         description: An error occurred while downloading the file.
      *         content:
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/HttpError'
-     *               properties:
-     *                 error:
-     *                   type: string
-     *                   example: Internal server error
      */
     this.router.get(
       `${this.path}/download`,
@@ -110,7 +118,11 @@ class FileController {
           const email = req.user.email;
           const candidate = await this.userService.checkEmail(email);
 
-          if (!candidate) throw new HttpError('User not found', 404);
+          if (!candidate)
+            throw new HttpError(
+              'User not have permission to access this file',
+              403,
+            );
 
           const savedFile = await this.fileService.download(id, candidate._id);
 
@@ -175,8 +187,8 @@ class FileController {
      *                 value:
      *                   status: 401
      *                   error: Authorization token is required
-     *       500:
-     *         description: Internal server error
+     *       403:
+     *         description: Forbidden
      *         content:
      *           application/json:
      *             schema:
@@ -184,8 +196,14 @@ class FileController {
      *             examples:
      *               overrides:
      *                 value:
-     *                   status: 500
-     *                   error: Internal server error
+     *                   status: 403
+     *                   error: User not have permission to access this file
+     *       500:
+     *         description: Internal server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
      */
     this.router.get(
       this.path,
@@ -197,7 +215,11 @@ class FileController {
           const email = req.user.email;
           const candidate = await this.userService.checkEmail(email);
 
-          if (!candidate) throw new HttpError('User not found', 404);
+          if (!candidate)
+            throw new HttpError(
+              'User not have permission to access this file',
+              403,
+            );
 
           const files = await this.fileService.getAll(
             sortBy,
@@ -215,6 +237,75 @@ class FileController {
       },
     );
 
+    /**
+     * @swagger
+     * /files/{id}:
+     *   get:
+     *     summary: Get a file by ID
+     *     tags: [Files]
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         description: ID of the file to retrieve
+     *     responses:
+     *       200:
+     *         description: The requested file
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/File'
+     *       400:
+     *         description: Bad request, missing or invalid parameters
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
+     *             examples:
+     *               overrides:
+     *                 value:
+     *                   status: 400
+     *                   error: Invalid or missing parameters
+     *       401:
+     *         description: Unauthorized, token is required
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
+     *             examples:
+     *               overrides:
+     *                 value:
+     *                   status: 401
+     *                   error: Authorization token is required
+     *       403:
+     *         description: The user does not have permission to access this file
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
+     *             examples:
+     *               forbidden:
+     *                 value:
+     *                   status: 403
+     *                   message: User not have permission to access this file
+     *       404:
+     *         description: The requested file could not be found.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
+     *             examples:
+     *               overrides:
+     *                 value:
+     *                   status: 404
+     *                   error: File not found
+     *       500:
+     *         description: Internal Server Error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
+     */
     this.router.get(
       `${this.path}/:id`,
       extractUserEmail,
@@ -224,7 +315,11 @@ class FileController {
           const email = req.user.email;
           const candidate = await this.userService.checkEmail(email);
 
-          if (!candidate) throw new HttpError('User not found', 404);
+          if (!candidate)
+            throw new HttpError(
+              'User not have permission to access this file',
+              403,
+            );
 
           const file = await this.fileService.getOne(fileId, candidate._id);
 
@@ -280,8 +375,8 @@ class FileController {
      *                 value:
      *                   status: 401
      *                   error: Authorization token is required
-     *       500:
-     *         description: Internal Server Error
+     *       403:
+     *         description: Forbidden
      *         content:
      *           application/json:
      *             schema:
@@ -289,8 +384,14 @@ class FileController {
      *             examples:
      *               overrides:
      *                 value:
-     *                   status: 500
-     *                   error: Internal Server Error
+     *                   status: 403
+     *                   error: User not have permission to access this file
+     *       500:
+     *         description: Internal Server Error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
      */
     this.router.post(
       `${this.path}/directory`,
@@ -308,7 +409,11 @@ class FileController {
           const email = req.user.email;
           const candidate = await this.userService.checkEmail(email);
 
-          if (!candidate) throw new HttpError('User not found', 404);
+          if (!candidate)
+            throw new HttpError(
+              'User not have permission to access this file',
+              403,
+            );
 
           const file = await this.fileService.createDirectory(
             name,
@@ -376,8 +481,8 @@ class FileController {
      *                 value:
      *                   status: 401
      *                   error: Authorization token is required
-     *       500:
-     *         description: Internal Server Error
+     *       403:
+     *         description: Forbidden
      *         content:
      *           application/json:
      *             schema:
@@ -385,8 +490,14 @@ class FileController {
      *             examples:
      *               overrides:
      *                 value:
-     *                   status: 500
-     *                   error: Internal Server Error
+     *                   status: 403
+     *                   error: User not have permission to access this file
+     *       500:
+     *         description: Internal Server Error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
      */
     this.router.post(
       this.path,
@@ -404,8 +515,12 @@ class FileController {
 
           const email = req.user.email;
           const candidate = await this.userService.checkEmail(email);
-
-          if (!candidate) throw new HttpError('User not found', 404);
+          // https://www.youtube.com/watch?v=L7Yge5Ph0z4
+          if (!candidate)
+            throw new HttpError(
+              'User not have permission to access this file',
+              403,
+            );
 
           const file = await this.fileService.create(
             reqFile,
@@ -483,8 +598,8 @@ class FileController {
      *                 value:
      *                   status: 401
      *                   error: Authorization token is required
-     *       500:
-     *         description: Internal Server Error
+     *       403:
+     *         description: Forbidden
      *         content:
      *           application/json:
      *             schema:
@@ -492,8 +607,25 @@ class FileController {
      *             examples:
      *               overrides:
      *                 value:
-     *                   status: 500
-     *                   error: Internal Server Error
+     *                   status: 403
+     *                   error: User not have permission to access this file
+     *       404:
+     *         description: The requested file could not be found.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
+     *             examples:
+     *               overrides:
+     *                 value:
+     *                   status: 404
+     *                   error: File not found
+     *       500:
+     *         description: Internal Server Error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
      */
     this.router.patch(
       `${this.path}/:id/update`,
@@ -512,7 +644,11 @@ class FileController {
           const email = req.user.email;
           const candidate = await this.userService.checkEmail(email);
 
-          if (!candidate) throw new HttpError('User not found', 404);
+          if (!candidate)
+            throw new HttpError(
+              'User not have permission to access this file',
+              403,
+            );
 
           const updatedFile = await this.fileService.update(
             fileId,
@@ -569,8 +705,8 @@ class FileController {
      *                 value:
      *                   status: 401
      *                   error: Authorization token is required
-     *       500:
-     *         description: Internal Server Error
+     *       403:
+     *         description: Forbidden
      *         content:
      *           application/json:
      *             schema:
@@ -578,8 +714,25 @@ class FileController {
      *             examples:
      *               overrides:
      *                 value:
-     *                   status: 500
-     *                   error: Internal Server Error
+     *                   status: 403
+     *                   error: User not have permission to access this file
+     *       404:
+     *         description: The requested file could not be found.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
+     *             examples:
+     *               overrides:
+     *                 value:
+     *                   status: 404
+     *                   error: File not found
+     *       500:
+     *         description: Internal Server Error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
      */
     this.router.delete(
       `${this.path}/:id/delete`,
@@ -593,7 +746,11 @@ class FileController {
           const email = req.user.email;
           const candidate = await this.userService.checkEmail(email);
 
-          if (!candidate) throw new HttpError('User not found', 404);
+          if (!candidate)
+            throw new HttpError(
+              'User not have permission to access this file',
+              403,
+            );
 
           const file = await this.fileService.delete(id, candidate._id);
 

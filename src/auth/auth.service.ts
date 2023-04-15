@@ -19,12 +19,12 @@ export class AuthService {
       throw new HttpError('Incorrect email or password', 422);
 
     const token = jwt.sign({ email: candidate.email }, secretKey, {
-      expiresIn: '1h',
+      expiresIn: '1d',
     });
     const refreshToken = jwt.sign(
       { email: candidate.email },
       refreshSecretKey,
-      { expiresIn: '2h' },
+      { expiresIn: '2d' },
     );
 
     const user = {
