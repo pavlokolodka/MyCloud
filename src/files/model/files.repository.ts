@@ -3,11 +3,12 @@ import { HttpError } from '../../utils/Error';
 import { IFileRepository } from './files.repository-interface';
 import { IFile } from './files.interface';
 import { File } from './files.model';
+import { CreateFileDto } from '../dto/create-file.dto';
 
 export class FileRepository implements IFileRepository<IFile> {
   constructor(private database = File) {}
 
-  public async create(query: IFile) {
+  public async create(query: CreateFileDto) {
     try {
       return await this.database.create(query);
     } catch (e) {

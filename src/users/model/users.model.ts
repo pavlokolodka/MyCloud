@@ -14,7 +14,7 @@ const userSchema = new Schema<IUser>({
     type: String,
     require: true,
   },
-  date: {
+  createdAt: {
     type: Date,
     default: Date.now,
   },

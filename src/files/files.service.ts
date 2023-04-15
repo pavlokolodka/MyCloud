@@ -15,9 +15,11 @@ import DataEncode from '../utils/file-encryption/encrypt';
 
 class FileService {
   private fileRepo: IFileRepository<IFile>;
+  private botService: BotService;
 
-  constructor(private botService = new BotService()) {
+  constructor() {
     this.fileRepo = new FileRepository();
+    this.botService = new BotService();
   }
 
   async getAll(sort: string, parent: string, userId: Types.ObjectId) {
@@ -96,7 +98,7 @@ class FileService {
         link: fileLink,
         size: reqFile.size,
         type: fileType,
-        childs: [],
+        childs: null,
         parent: null,
         userId: userId,
       });
@@ -112,13 +114,13 @@ class FileService {
       link: fileLink,
       size: reqFile.size,
       type: fileType!,
-      childs: [],
-      parent: fileParent?._id,
+      childs: null,
+      parent: fileParent._id,
       userId: userId,
     });
 
-    fileParent?.childs?.push(file._id);
-    await fileParent?.save?.();
+    fileParent.childs?.push(file._id);
+    await fileParent.save();
 
     return file;
   }
@@ -132,6 +134,8 @@ class FileService {
         type,
         parent: null,
         userId: userId,
+        size: 0,
+        childs: [],
       });
       return directory;
     }
@@ -143,10 +147,12 @@ class FileService {
       type,
       parent: parentDirectory._id,
       userId: userId,
+      size: 0,
+      childs: [],
     });
 
-    parentDirectory?.childs?.push(directory._id);
-    await parentDirectory.save?.();
+    parentDirectory.childs?.push(directory._id);
+    await parentDirectory.save();
 
     return directory;
   }
@@ -177,22 +183,22 @@ class FileService {
           index = array.indexOf(file._id);
         }
 
-        await parentDirectory.save?.();
+        await parentDirectory.save();
       }
 
       newParentDirectory.childs?.push(file._id);
-      await newParentDirectory.save?.();
+      await newParentDirectory.save();
 
       file.parent = newParentDirectory._id;
       file.name = name + '.' + file.type;
-      const updatedFile = await file.save?.();
+      const updatedFile = await file.save();
 
       return updatedFile;
     }
 
     if (name) {
       file.name = name + '.' + file.type;
-      const updatedFile = await file.save?.();
+      const updatedFile = await file.save();
 
       return updatedFile;
     }
@@ -215,14 +221,14 @@ class FileService {
           index = array.indexOf(file._id);
         }
 
-        await parentDirectory.save?.();
+        await parentDirectory.save();
       }
 
       newParentDirectory.childs?.push(file._id);
-      await newParentDirectory.save?.();
+      await newParentDirectory.save();
 
       file.parent = newParentDirectory._id;
-      const updatedFile = await file.save?.();
+      const updatedFile = await file.save();
 
       return updatedFile;
     }
@@ -293,7 +299,7 @@ class FileService {
         const newLink = await this.getLink(file.storageId!);
         file.link = newLink;
         file.updatedAt = new Date(Date.now());
-        await file.save?.();
+        await file.save();
       }
     });
   }
