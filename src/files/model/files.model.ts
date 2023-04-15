@@ -70,6 +70,7 @@ const fileSchema = new Schema<IFile>({
   userId: {
     type: Schema.Types.ObjectId,
     ref: 'User',
+    require: true,
   },
   parent: {
     type: Schema.Types.ObjectId,
@@ -81,7 +82,7 @@ const fileSchema = new Schema<IFile>({
       ref: 'File',
     },
   ],
-  date: {
+  createdAt: {
     type: Date,
     default: Date.now,
   },

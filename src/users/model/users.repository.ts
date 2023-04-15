@@ -1,4 +1,5 @@
 import { HttpError } from '../../utils/Error';
+import { CreateUserDto } from '../dto/create-user.dto';
 import { IUser } from './users.interface';
 import { User } from './users.model';
 import { IUserRepository } from './users.repository-interface';
@@ -6,7 +7,7 @@ import { IUserRepository } from './users.repository-interface';
 export class UserRepository implements IUserRepository<IUser> {
   constructor(private database = User) {}
 
-  public async create(query: IUser) {
+  public async create(query: CreateUserDto) {
     try {
       return await this.database.create(query);
     } catch (e) {

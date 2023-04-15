@@ -1,8 +1,8 @@
 import { body } from 'express-validator';
 
 export const isValidUser = [
-  body(`email`).isEmail().withMessage('wrong email'),
-  body('password', 'password must be at least 6 characters')
+  body(`email`).isEmail().withMessage('Email is not valid'),
+  body('password', 'Password must be at least 6 characters')
     .isLength({ min: 6, max: 20 })
     .isAlphanumeric()
     .trim(),
@@ -12,10 +12,9 @@ export const isValidUser = [
 ];
 
 export const loginValidation = [
-  body(`email`).isEmail().withMessage('wrong email'),
-  body('password', 'password must be at least 6 characters')
+  body(`email`).isEmail().withMessage('Email is not valid'),
+  body('password', 'Password must be at least 6 characters')
     .isLength({ min: 6, max: 20 })
-    .isAlphanumeric()
     .trim(),
 ];
 
@@ -23,11 +22,14 @@ export const tokenValidation = [
   body(`refreshToken`)
     .isString()
     .notEmpty()
-    .withMessage('refresh token not passed'),
+    .withMessage('Refresh token is not passed'),
 ];
 
 export const directoryValidation = [
-  body(`name`).isString().notEmpty().withMessage('directory name not passed'),
+  body(`name`)
+    .isString()
+    .notEmpty()
+    .withMessage('Directory name is not passed'),
 ];
 
 export const updateFileValidation = [
@@ -35,10 +37,10 @@ export const updateFileValidation = [
     .optional()
     .isString()
     .notEmpty()
-    .withMessage('name must be not empty string'),
+    .withMessage('Name must be not empty string'),
   body(`parentId`)
     .optional()
     .isString()
     .notEmpty()
-    .withMessage('parent must be not empty valid directory id type of string'),
+    .withMessage('Parent must be not empty string of valid directory id'),
 ];

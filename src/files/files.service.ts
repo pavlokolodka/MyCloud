@@ -1,13 +1,11 @@
 import { unlink } from 'node:fs';
+import { Types } from 'mongoose';
 import { BotService } from '../bot/bot.service';
 import { FileRepository } from './model/files.repository';
 import { isValidObjectId } from '../utils/isObjectId';
 import { HttpError } from '../utils/Error';
 import { IFile } from './model/files.interface';
 import { IFileRepository } from './model/files.repository-interface';
-import { AuthService } from '../auth/auth.service';
-import { UserService } from '../users/users.service';
-import { IUser } from '../users/model/users.interface';
 import {
   TelegramAudioDocument,
   TelegramDocument,
@@ -17,24 +15,20 @@ import DataEncode from '../utils/file-encryption/encrypt';
 
 class FileService {
   private fileRepo: IFileRepository<IFile>;
+  private botService: BotService;
 
-  constructor(
-    private botService = new BotService(),
-    private readonly authService = new AuthService(),
-    private readonly userService = new UserService(),
-  ) {
+  constructor() {
     this.fileRepo = new FileRepository();
+    this.botService = new BotService();
   }
 
-  async getAll(sort: string, token: string, parent: string) {
-    const user = await this.getUser(token);
-
+  async getAll(sort: string, parent: string, userId: Types.ObjectId) {
     if (parent) {
-      const parentDirectory = await this.getFileParent(parent, user);
+      const parentDirectory = await this.getFileParent(parent, userId);
     }
 
     const files = await this.fileRepo.getAll(
-      { parent: parent, userId: user._id },
+      { parent: parent, userId: userId },
       sort,
     );
 
@@ -45,42 +39,43 @@ class FileService {
     return files;
   }
 
-  async getOne(id: string, token: string) {
-    const user = await this.getUser(token);
+  async getOne(id: string, userId: Types.ObjectId) {
     const isValidId = isValidObjectId(id);
 
-    if (!isValidId) throw new HttpError('file id is not valid', 400);
+    if (!isValidId) throw new HttpError('File id is not valid', 400);
 
-    const file = await this.fileRepo.getOne({ _id: id }, user._id!);
+    const file = await this.fileRepo.getOne({ _id: id });
 
-    if (!file) throw new HttpError('Can not get file', 500);
+    if (!file) throw new HttpError('File not found', 404);
+
+    if (String(file.userId) !== String(userId)) {
+      throw new HttpError('User not have permission to access this file', 403);
+    }
 
     return file;
   }
 
-  async download(id: string, token: string) {
-    const file = await this.getOne(id, token);
-    const user = await this.getUser(token);
+  async download(id: string, userId: Types.ObjectId) {
+    const file = await this.getOne(id, userId);
 
     if (file.type === 'directory')
-      throw new HttpError('can not get folder', 400);
+      throw new HttpError('Can not get folder', 400);
 
     await this.checkLinkExp([file]);
 
     return {
       name: file.name,
       link: file.link,
-      secret: user.email,
+      secret: String(userId),
     };
   }
 
-  async create(reqFile: any, token: string, parent?: string) {
-    const user = await this.getUser(token);
+  async create(reqFile: any, userId: Types.ObjectId, parent?: string) {
     const path = reqFile.path;
     const fileOptions = {
       filename: reqFile.name,
       type: reqFile.type,
-      secret: user.email,
+      secret: String(userId),
     } as FileOptions;
     let fileId: string;
     let savedFile: TelegramDocument | TelegramAudioDocument;
@@ -107,15 +102,15 @@ class FileService {
         link: fileLink,
         size: reqFile.size,
         type: fileType,
-        childs: [],
+        childs: null,
         parent: null,
-        userId: user._id,
+        userId: userId,
       });
 
       return file;
     }
 
-    const fileParent = await this.getFileParent(parent, user);
+    const fileParent = await this.getFileParent(parent, userId);
 
     const file = await this.fileRepo.create({
       name: reqFile.name,
@@ -123,57 +118,64 @@ class FileService {
       link: fileLink,
       size: reqFile.size,
       type: fileType!,
-      childs: [],
-      parent: fileParent?._id,
-      userId: user._id,
+      childs: null,
+      parent: fileParent._id,
+      userId: userId,
     });
 
-    fileParent?.childs?.push(file._id);
-    await fileParent?.save?.();
+    fileParent.childs?.push(file._id);
+    await fileParent.save();
 
     return file;
   }
 
-  async createDirectory(name: string, token: string, parent?: string) {
+  async createDirectory(name: string, userId: Types.ObjectId, parent?: string) {
     const type = 'directory';
-    const user = await this.getUser(token);
 
     if (!parent) {
       const directory = await this.fileRepo.create({
         name,
         type,
         parent: null,
-        userId: user._id,
+        userId: userId,
+        size: 0,
+        childs: [],
       });
       return directory;
     }
 
-    const parentDirectory = await this.getFileParent(parent, user);
+    const parentDirectory = await this.getFileParent(parent, userId);
 
     const directory = await this.fileRepo.create({
       name,
       type,
       parent: parentDirectory._id,
-      userId: user._id,
+      userId: userId,
+      size: 0,
+      childs: [],
     });
 
-    parentDirectory?.childs?.push(directory._id);
-    await parentDirectory.save?.();
+    parentDirectory.childs?.push(directory._id);
+    await parentDirectory.save();
 
     return directory;
   }
 
-  async update(fileId: string, token: string, name: string, parentId: string) {
-    const file = await this.getOne(fileId, token);
-    const user = await this.getUser(token);
+  async update(
+    fileId: string,
+    userId: Types.ObjectId,
+    name: string,
+    parentId?: string,
+  ) {
+    const file = await this.getOne(fileId, userId);
 
     if (name && parentId) {
-      const newParentDirectory = await this.getFileParent(parentId, user);
+      const newParentDirectory = await this.getFileParent(parentId, userId);
 
       if (file.parent) {
         const parentDirectory = await this.getFileParent(
           String(file.parent),
-          user,
+          userId,
         );
         let index = parentDirectory.childs?.indexOf(
           file._id,
@@ -185,106 +187,113 @@ class FileService {
           index = array.indexOf(file._id);
         }
 
-        await parentDirectory.save?.();
+        await parentDirectory.save();
       }
 
       newParentDirectory.childs?.push(file._id);
-      await newParentDirectory.save?.();
+      await newParentDirectory.save();
 
       file.parent = newParentDirectory._id;
       file.name = name + '.' + file.type;
-      const updatedFile = await file.save?.();
+      const updatedFile = await file.save();
 
       return updatedFile;
     }
 
     if (name) {
       file.name = name + '.' + file.type;
-      const updatedFile = await file.save?.();
+      const updatedFile = await file.save();
 
       return updatedFile;
     }
 
-    const newParentDirectory = await this.getFileParent(parentId, user);
+    if (parentId) {
+      const newParentDirectory = await this.getFileParent(parentId, userId);
 
-    if (file.parent) {
-      const parentDirectory = await this.getFileParent(
-        String(file.parent),
-        user,
-      );
-      let index = parentDirectory.childs?.indexOf(
-        file._id,
-      ) as unknown as number;
-      const array = parentDirectory.childs!;
+      if (file.parent) {
+        const parentDirectory = await this.getFileParent(
+          String(file.parent),
+          userId,
+        );
+        let index = parentDirectory.childs?.indexOf(
+          file._id,
+        ) as unknown as number;
+        const array = parentDirectory.childs!;
 
-      while (index !== -1) {
-        parentDirectory.childs?.splice(index, 1);
-        index = array.indexOf(file._id);
+        while (index !== -1) {
+          parentDirectory.childs?.splice(index, 1);
+          index = array.indexOf(file._id);
+        }
+
+        await parentDirectory.save();
       }
 
-      await parentDirectory.save?.();
+      newParentDirectory.childs?.push(file._id);
+      await newParentDirectory.save();
+
+      file.parent = newParentDirectory._id;
+      const updatedFile = await file.save();
+
+      return updatedFile;
     }
-
-    newParentDirectory.childs?.push(file._id);
-    await newParentDirectory.save?.();
-
-    file.parent = newParentDirectory._id;
-    const updatedFile = await file.save?.();
-
-    return updatedFile;
   }
 
-  async delete(id: string, token: string) {
-    const user = await this.getUser(token);
+  async delete(id: string, userId: Types.ObjectId) {
     const isValidId = isValidObjectId(id);
 
-    if (!isValidId) throw new HttpError('file id is not valid', 400);
+    if (!isValidId) throw new HttpError('File id is not valid', 400);
 
-    const file = await this.fileRepo.getOne({ _id: id }, user._id!);
+    const file = await this.getOne(id, userId);
 
-    if (!file) throw new HttpError('file not exist', 404);
-
-    file?.childs?.length
+    file.childs?.length
       ? Promise.all([
-          this.deleteChilds(file, user),
-          this.deleteParent(file, user),
+          this.deleteChilds(file, userId),
+          this.deleteParent(file, userId),
         ])
-      : await this.deleteParent(file, user);
+      : await this.deleteParent(file, userId);
 
     const deletedFile = await this.fileRepo.delete({
       _id: id,
-      userId: user._id,
+      userId: userId,
     });
 
     return deletedFile;
   }
 
-  async getFileParent(parentId: string, user: IUser) {
+  async getFileParent(parentId: string, userId: Types.ObjectId) {
     const isValidId = isValidObjectId(parentId);
 
-    if (!isValidId) throw new HttpError('parent id is not valid', 400);
+    if (!isValidId) throw new HttpError('Directory id is not valid', 400);
 
-    const fileParent = await this.fileRepo.getOne({ _id: parentId }, user._id!);
+    const fileParent = await this.fileRepo.getOne({ _id: parentId });
 
-    if (!fileParent || fileParent.type !== 'directory')
-      throw new HttpError('such directory not exist', 404);
+    if (!fileParent || fileParent.type !== 'directory') {
+      throw new HttpError('Directory not exist', 404);
+    }
+
+    if (String(fileParent.userId) !== String(userId)) {
+      throw new HttpError('User not have permission to access this file', 403);
+    }
 
     return fileParent;
   }
 
-  private async deleteChilds(file: IFile, user: IUser) {
+  private async deleteChilds(file: IFile, userId: Types.ObjectId) {
     file.childs?.forEach(async (file) => {
-      const isParent = await this.fileRepo.getOne({ _id: file }, user._id!);
+      const isParent = await this.fileRepo.getOneWithUser(
+        { _id: file },
+        userId,
+      );
 
-      if (isParent?.childs?.length) await this.deleteChilds(isParent, user);
+      if (isParent?.childs?.length) await this.deleteChilds(isParent, userId);
 
       await this.fileRepo.delete({ _id: file });
     });
   }
 
-  private async deleteParent(file: IFile, user: IUser) {
+  private async deleteParent(file: IFile, userId: Types.ObjectId) {
     await this.fileRepo.deleteParent(
-      { _id: file.parent, userId: user._id! },
+      { _id: file.parent, userId: userId },
       { $pull: { childs: file._id } },
     );
   }
@@ -300,7 +309,7 @@ class FileService {
         const newLink = await this.getLink(file.storageId!);
         file.link = newLink;
         file.updatedAt = new Date(Date.now());
-        await file.save?.();
+        await file.save();
       }
     });
   }
@@ -312,7 +321,7 @@ class FileService {
     );
     const file = await this.botService.sendDocs(encryptedFilePath, fileOptions);
 
-    if (!file) throw new HttpError('internal server error', 500);
+    if (!file) throw new HttpError('Internal Server Error', 500);
 
     this.deleteFromDisk(encryptedFilePath);
 
@@ -326,16 +335,6 @@ class FileService {
     unlink(path, (err) => {
       if (err) throw err;
     });
-  }
-
-  private async getUser(token: string) {
-    const email = this.authService.getPayloadFromRawToken(token);
-
-    const candidate = await this.userService.checkEmail(email);
-
-    if (!candidate) throw new HttpError('user not found', 404);
-
-    return candidate;
   }
 
   private async getLink(id: string) {

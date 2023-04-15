@@ -3,11 +3,12 @@ import { HttpError } from '../../utils/Error';
 import { IFileRepository } from './files.repository-interface';
 import { IFile } from './files.interface';
 import { File } from './files.model';
+import { CreateFileDto } from '../dto/create-file.dto';
 
 export class FileRepository implements IFileRepository<IFile> {
   constructor(private database = File) {}
 
-  public async create(query: IFile) {
+  public async create(query: CreateFileDto) {
     try {
       return await this.database.create(query);
     } catch (e) {
@@ -38,7 +39,17 @@ export class FileRepository implements IFileRepository<IFile> {
     }
   }
 
-  public async getOne(query: object, userId: mongoose.Types.ObjectId) {
+  public async getOne(query: object) {
+    try {
+      const file = await this.database.findOne(query);
+
+      return file;
+    } catch (e) {
+      throw new HttpError('can not get file', 500);
+    }
+  }
+
+  public async getOneWithUser(query: object, userId: mongoose.Types.ObjectId) {
     try {
       const file = await this.database
         .findOne(query)

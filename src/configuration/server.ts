@@ -59,7 +59,6 @@ class Server {
       ],
     };
 
-    console.log(path.resolve('src') + '/utils/Error.ts');
     const swaggerSpec = swaggerJSDoc(options);
 
     this.app.use('/api', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
