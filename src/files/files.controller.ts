@@ -11,7 +11,7 @@ import { IGetFilesDto } from './dto/get-files.dto';
 import {
   directoryValidation,
   updateFileValidation,
-} from '../middleware/validator';
+} from '../middleware/validators/validator';
 import DataEncode from '../utils/file-encryption/encrypt';
 import { UserService } from '../users/users.service';
 import { extractUserEmail } from '../middleware/auth';

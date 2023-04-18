@@ -3,36 +3,34 @@ import * as jwt from 'jsonwebtoken';
 import { UserService } from '../users/users.service';
 import { HttpError } from '../utils/Error';
 import { refreshSecretKey, secretKey } from './constants';
+import { ILoginDto } from './dto/login.dto';
 
 export class AuthService {
-  constructor(private userService = new UserService()) {}
+  constructor(private userService: UserService) {}
 
-  public async login(email: string, password: string) {
-    const candidate = await this.userService.checkEmail(email);
-
-    if (!candidate)
-      throw new HttpError(`User with email ${email} doesn't exist`, 404);
-
-    const isEqualPassword = await bcrypt.compare(password, candidate.password);
+  public async login(payload: ILoginDto) {
+    const isEqualPassword = await bcrypt.compare(
+      payload.password,
+      payload.userPassword,
+    );
 
     if (!isEqualPassword)
       throw new HttpError('Incorrect email or password', 422);
 
-    const token = jwt.sign({ email: candidate.email }, secretKey, {
+    const token = jwt.sign({ id: payload.userId }, secretKey, {
       expiresIn: '1d',
     });
-    const refreshToken = jwt.sign(
-      { email: candidate.email },
-      refreshSecretKey,
-      { expiresIn: '2d' },
-    );
+    const refreshToken = jwt.sign({ id: payload.userId }, refreshSecretKey, {
+      expiresIn: '2d',
+    });
 
     const user = {
       accessToken: token,
       refreshToken: refreshToken,
       user: {
-        name: candidate.name,
-        email: candidate.email,
+        name: payload.userName,
+        id: payload.userId,
+        email: payload.email,
       },
     };
 
@@ -40,19 +38,12 @@ export class AuthService {
   }
 
   public async register(name: string, email: string, password: string) {
-    const candidate = await this.userService.checkEmail(email);
-
-    if (candidate)
-      throw new HttpError(`User with email ${email} aready exist`, 409);
-
     const hashPassword = await bcrypt.hash(password, 10);
-
     const user = await this.userService.create({
       name,
       email,
       password: hashPassword,
     });
-
     const token = jwt.sign({ email: user.email }, secretKey, {
       expiresIn: '1d',
     });
