@@ -1,10 +1,10 @@
 import { UpdateResult, DeleteResult } from 'mongodb';
 import { CreateUserDto } from '../dto/create-user.dto';
 
-export interface IUserRepository<IUser> {
-  create: (query: CreateUserDto) => Promise<IUser>;
-  getAll: (query: object) => Promise<IUser[]>;
-  getOne: (query: object) => Promise<IUser | null>;
-  update: (query: IUser) => Promise<UpdateResult>;
+export interface IUserRepository<T> {
+  create: (query: CreateUserDto) => Promise<T>;
+  getAll: (query: object) => Promise<T[]>;
+  getOne: (query: object) => Promise<T | null>;
+  update: (query: T) => Promise<UpdateResult>;
   delete: (query: object) => Promise<DeleteResult>;
 }

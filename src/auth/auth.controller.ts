@@ -6,10 +6,14 @@ import {
   isValidUser,
   loginValidation,
   tokenValidation,
-} from '../middleware/validator';
-import { IRegisterUserDto } from './dto/register.dto';
-import { ILoginDto } from './dto/login.dto';
-import { IRefreshTokenDto } from './dto/refresh-token.dto';
+} from '../middleware/validators/validator';
+import { UserService } from '../users/users.service';
+import {
+  ILoginBody,
+  IRefreshTokensBody,
+  IRegisterBody,
+} from '../middleware/validators/types';
+import { extractUserId } from '../middleware/auth';
 
 /**
  * @swagger
@@ -21,9 +25,11 @@ export class AuthController {
   private path = '/auth';
   public router = Router();
   private authService: AuthService;
+  private userService: UserService;
 
   constructor() {
-    this.authService = new AuthService();
+    this.userService = new UserService();
+    this.authService = new AuthService(this.userService);
     this.intializeRoutes();
   }
 
@@ -36,10 +42,11 @@ export class AuthController {
      *     tags: [Auth]
      *     requestBody:
      *       required: true
+     *       description: The request body for log in type of ILoginBody.
      *       content:
      *         application/json:
      *           schema:
-     *             $ref: '#/components/schemas/ILoginDto'
+     *             $ref: '#/components/schemas/ILoginBody'
      *     responses:
      *       200:
      *         description: Login successful. Returns an access token, a refresh token, and user information.
@@ -119,13 +126,26 @@ export class AuthController {
             throw new HttpError(`${errors.array()[0].msg}`, 400);
           }
 
-          const { email, password }: ILoginDto = req.body;
-          const newUser = await this.authService.login(email, password);
+          const { email, password }: ILoginBody = req.body;
+          const candidate = await this.userService.checkEmail(email);
 
-          return res.send(newUser);
+          if (!candidate)
+            throw new HttpError(`User with email ${email} doesn't exist`, 404);
+
+          const singInUser = await this.authService.login({
+            password,
+            userPassword: candidate.password,
+            userName: candidate.name,
+            userId: candidate._id,
+            email,
+          });
+
+          return res.send(singInUser);
         } catch (e) {
-          if (!(e instanceof HttpError))
+          if (!(e instanceof HttpError)) {
             return res.status(500).send('Internal server error');
+          }
+
           return res
             .status(e.status)
             .send({ message: e.message, status: e.status });
@@ -141,11 +161,11 @@ export class AuthController {
      *     tags: [Auth]
      *     requestBody:
      *       required: true
-     *       description: The request body for creating a new user type of IRegisterUserDto.
+     *       description: The request body for creating a new user type of IRegisterBody.
      *       content:
      *         application/json:
      *           schema:
-     *             $ref: '#/components/schemas/IRegisterUserDto'
+     *             $ref: '#/components/schemas/IRegisterBody'
      *     responses:
      *       200:
      *         description: Successful registration
@@ -214,18 +234,26 @@ export class AuthController {
             throw new HttpError(`${errors.array()[0].msg}`, 400);
           }
 
-          const { name, email, password }: IRegisterUserDto = req.body;
+          const { name, email, password }: IRegisterBody = req.body;
 
-          const newUser = await this.authService.register(
+          const candidate = await this.userService.checkEmail(email);
+
+          if (candidate) {
+            throw new HttpError(`User with email ${email} aready exist`, 409);
+          }
+
+          const newUser = await this.authService.register({
             name,
             email,
             password,
-          );
+          });
 
           return res.send(newUser);
         } catch (e) {
-          if (!(e instanceof HttpError))
+          if (!(e instanceof HttpError)) {
             return res.status(500).send('Internal server error');
+          }
+
           return res
             .status(e.status)
             .send({ message: e.message, status: e.status });
@@ -241,11 +269,11 @@ export class AuthController {
      *     tags: [Auth]
      *     requestBody:
      *       required: true
-     *       description: The request body for refreshing access and refresh tokens type of IRefreshTokenDto.
+     *       description: The request body for refreshing access and refresh tokens type of IRefreshTokensBody.
      *       content:
      *         application/json:
      *           schema:
-     *             $ref: '#/components/schemas/IRefreshTokenDto'
+     *             $ref: '#/components/schemas/IRefreshTokensBody'
      *     responses:
      *       200:
      *         description: Returns a new access and refresh token.
@@ -296,6 +324,7 @@ export class AuthController {
      */
     this.router.post(
       `${this.path}/refresh-tokens`,
+      extractUserId,
       tokenValidation,
       async (req: Request, res: Response) => {
         try {
@@ -305,18 +334,19 @@ export class AuthController {
             throw new HttpError(`${errors.array()[0].msg}`, 400);
           }
 
-          const { refreshToken }: IRefreshTokenDto = req.body;
+          const { refreshToken }: IRefreshTokensBody = req.body;
           const refreshTokens = this.authService.refreshTokens(refreshToken);
 
           return res.send(refreshTokens);
-        } catch (error) {
-          if (!(error instanceof HttpError))
+        } catch (e) {
+          if (!(e instanceof HttpError)) {
             return res.status(500).send('Internal server error');
+          }
 
           return res
             .set('WWW-Authenticate', 'Bearer')
-            .status(error.status)
-            .send({ message: error.message, status: error.status });
+            .status(e.status)
+            .send({ message: e.message, status: e.status });
         }
       },
     );

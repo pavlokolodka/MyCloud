@@ -56,6 +56,7 @@ class Server {
         path.resolve('src') + '/*/dto/*.dto.ts',
         path.resolve('src') + '/*/model/*.model.ts',
         path.resolve('src') + '/utils/Error.ts',
+        path.resolve('src') + '/middleware/validators/types.ts',
       ],
     };
 

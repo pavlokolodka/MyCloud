@@ -1,21 +1,8 @@
-/**
- * @swagger
- * components:
- *   schemas:
- *     ILoginDto:
- *       type: object
- *       properties:
- *         email:
- *           type: string
- *           description: The user's email address.
- *         password:
- *           type: string
- *           description: The user's password.
- *       required:
- *         - email
- *         - password
- */
+import { Types } from 'mongoose';
 export interface ILoginDto {
-  email: string;
   password: string;
+  userPassword: string;
+  userName: string;
+  userId: Types.ObjectId;
+  email: string;
 }
