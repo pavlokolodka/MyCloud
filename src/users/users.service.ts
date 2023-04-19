@@ -15,8 +15,13 @@ export class UserService {
     return user;
   }
 
-  public create(query: CreateUserDto) {
-    const user = this.userRepo.create(query);
+  public getUserById(id: string) {
+    const user = this.userRepo.getOne({ _id: id });
+    return user;
+  }
+
+  public create(payload: CreateUserDto) {
+    const user = this.userRepo.create(payload);
     return user;
   }
 }

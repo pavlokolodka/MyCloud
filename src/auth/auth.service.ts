@@ -4,6 +4,7 @@ import { UserService } from '../users/users.service';
 import { HttpError } from '../utils/Error';
 import { refreshSecretKey, secretKey } from './constants';
 import { ILoginDto } from './dto/login.dto';
+import { IRegisterDto } from './dto/register.dto';
 
 export class AuthService {
   constructor(private userService: UserService) {}
@@ -37,17 +38,17 @@ export class AuthService {
     return user;
   }
 
-  public async register(name: string, email: string, password: string) {
-    const hashPassword = await bcrypt.hash(password, 10);
+  public async register(payload: IRegisterDto) {
+    const hashPassword = await bcrypt.hash(payload.password, 10);
     const user = await this.userService.create({
-      name,
-      email,
+      name: payload.name,
+      email: payload.email,
       password: hashPassword,
     });
-    const token = jwt.sign({ email: user.email }, secretKey, {
+    const token = jwt.sign({ id: user._id }, secretKey, {
       expiresIn: '1d',
     });
-    const refreshToken = jwt.sign({ email: user.email }, refreshSecretKey, {
+    const refreshToken = jwt.sign({ id: user._id }, refreshSecretKey, {
       expiresIn: '2d',
     });
 
@@ -57,53 +58,32 @@ export class AuthService {
       user: {
         name: user.name,
         email: user.email,
+        id: user._id,
       },
     };
   }
 
   public refreshTokens(rawToken: string) {
-    const payload = this.getPayload(rawToken);
+    const userId = this.getPayloadFromToken(rawToken).id;
 
-    const token = jwt.sign({ email: payload }, secretKey, { expiresIn: '1d' });
-    const refreshToken = jwt.sign({ email: payload }, refreshSecretKey, {
+    const token = jwt.sign({ id: userId }, secretKey, { expiresIn: '1d' });
+    const refreshToken = jwt.sign({ id: userId }, refreshSecretKey, {
       expiresIn: '2d',
     });
 
     return { accessToken: token, refreshToken };
   }
 
-  public getPayload(token: string, refreshToken = true) {
+  public getPayloadFromToken(token: string) {
     try {
-      let payload: jwt.JwtPayload;
-
-      if (!refreshToken) {
-        payload = jwt.verify(token, secretKey) as unknown as jwt.JwtPayload;
-
-        return payload.email;
-      }
-
-      payload = jwt.verify(
+      const payload = jwt.verify(
         token,
         refreshSecretKey,
       ) as unknown as jwt.JwtPayload;
 
-      return payload.email;
+      return payload;
     } catch (error) {
       throw new HttpError('Invalid JWT token', 401);
     }
-  }
-
-  public getPayloadFromRawToken(rawToken: string) {
-    const [bearer, token] = rawToken.split(' ');
-
-    if (!bearer || bearer !== 'Bearer') {
-      throw new HttpError('Invalid token format', 401);
-    }
-
-    if (!token) {
-      throw new HttpError('Invalid auth token', 401);
-    }
-
-    return this.getPayload(token, false);
   }
 }

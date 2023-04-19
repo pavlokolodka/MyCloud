@@ -6,15 +6,19 @@ import { ReadStream, WriteStream } from 'fs';
 import { HttpError } from '../utils/Error';
 import FileService from './files.service';
 import { uploadMiddlware } from '../middleware/uploadMiddleware';
-import { ICreateDirectoryDto } from './dto/create-directory.dto';
-import { IGetFilesDto } from './dto/get-files.dto';
+
 import {
   directoryValidation,
   updateFileValidation,
 } from '../middleware/validators/validator';
 import DataEncode from '../utils/file-encryption/encrypt';
 import { UserService } from '../users/users.service';
-import { extractUserEmail } from '../middleware/auth';
+import { extractUserId } from '../middleware/auth';
+import {
+  ICreateDirectoryBody,
+  IGetFilesParams,
+  IUpdateFileBody,
+} from '../middleware/validators/types';
 
 /**
  * @swagger
@@ -108,15 +112,15 @@ class FileController {
      */
     this.router.get(
       `${this.path}/download`,
-      extractUserEmail,
+      extractUserId,
       async (req: Request, res: Response) => {
         try {
           const id = req.query.id as string;
 
           if (!id) throw new HttpError('file id not passed', 400);
 
-          const email = req.user.email;
-          const candidate = await this.userService.checkEmail(email);
+          const userId = req.user.id;
+          const candidate = await this.userService.getUserById(userId);
 
           if (!candidate)
             throw new HttpError(
@@ -207,13 +211,12 @@ class FileController {
      */
     this.router.get(
       this.path,
-      extractUserEmail,
+      extractUserId,
       async (req: Request, res: Response) => {
         try {
-          const { sortBy, parent }: IGetFilesDto =
-            req.query as unknown as IGetFilesDto;
-          const email = req.user.email;
-          const candidate = await this.userService.checkEmail(email);
+          const { sortBy, parent } = req.query as unknown as IGetFilesParams;
+          const userId = req.user.id;
+          const candidate = await this.userService.getUserById(userId);
 
           if (!candidate)
             throw new HttpError(
@@ -308,12 +311,12 @@ class FileController {
      */
     this.router.get(
       `${this.path}/:id`,
-      extractUserEmail,
+      extractUserId,
       async (req: Request, res: Response) => {
         try {
           const fileId = req.params.id;
-          const email = req.user.email;
-          const candidate = await this.userService.checkEmail(email);
+          const userId = req.user.id;
+          const candidate = await this.userService.getUserById(userId);
 
           if (!candidate)
             throw new HttpError(
@@ -341,11 +344,11 @@ class FileController {
      *     tags: [Files]
      *     requestBody:
      *       required: true
-     *       description: The request body for creating a new directory type of ICreateDirectoryDto.
+     *       description: The request body for creating a new directory type of ICreateDirectoryBody.
      *       content:
      *         application/json:
      *           schema:
-     *             $ref: '#/components/schemas/ICreateDirectoryDto'
+     *             $ref: '#/components/schemas/ICreateDirectoryBody'
      *     responses:
      *       200:
      *         description: A new directory has been created.
@@ -395,7 +398,7 @@ class FileController {
      */
     this.router.post(
       `${this.path}/directory`,
-      extractUserEmail,
+      extractUserId,
       directoryValidation,
       async (req: Request, res: Response) => {
         try {
@@ -405,9 +408,9 @@ class FileController {
             throw new HttpError(`${errors.array()[0].msg}`, 400);
           }
 
-          const { name, parent }: ICreateDirectoryDto = req.body;
-          const email = req.user.email;
-          const candidate = await this.userService.checkEmail(email);
+          const { name, parent }: ICreateDirectoryBody = req.body;
+          const userId = req.user.id;
+          const candidate = await this.userService.getUserById(userId);
 
           if (!candidate)
             throw new HttpError(
@@ -449,6 +452,7 @@ class FileController {
      *                 description: The file to be uploaded
      *               parent:
      *                 type: string
+     *                 example: 48748c09-402a-4252-a08a-1b75f6556acb
      *                 description: The ID of the parent directory. If not provided, the new file will be created in the root directory.
      *             required:
      *               - file
@@ -501,7 +505,7 @@ class FileController {
      */
     this.router.post(
       this.path,
-      extractUserEmail,
+      extractUserId,
       uploadMiddlware,
       async (req: Request, res: Response) => {
         try {
@@ -513,9 +517,9 @@ class FileController {
               .status(400)
               .send({ message: 'File not passed', status: 400 });
 
-          const email = req.user.email;
-          const candidate = await this.userService.checkEmail(email);
-          // https://www.youtube.com/watch?v=L7Yge5Ph0z4
+          const userId = req.user.id;
+          const candidate = await this.userService.getUserById(userId);
+
           if (!candidate)
             throw new HttpError(
               'User not have permission to access this file',
@@ -555,20 +559,11 @@ class FileController {
      *         description: The ID of the file to update.
      *     requestBody:
      *       required: true
+     *       description: The request body for updating the file type of IUpdateFileBody.
      *       content:
      *         application/json:
      *           schema:
-     *             type: object
-     *             properties:
-     *               parentId:
-     *                 type: string
-     *                 description: The ID of the parent directory to move the file to.
-     *               name:
-     *                 type: string
-     *                 description: The new name for the file.
-     *             required:
-     *               - parentId
-     *               - name
+     *             $ref: '#/components/schemas/IUpdateFileBody'
      *     responses:
      *       200:
      *         description: The updated file.
@@ -629,11 +624,11 @@ class FileController {
      */
     this.router.patch(
       `${this.path}/:id/update`,
-      extractUserEmail,
+      extractUserId,
       updateFileValidation,
       async (req: Request, res: Response) => {
         try {
-          const { parent, name }: ICreateDirectoryDto = req.body;
+          const { parent, name }: IUpdateFileBody = req.body;
           const fileId = req.params.id;
 
           if (!fileId) throw new HttpError('File id is required', 400);
@@ -641,8 +636,8 @@ class FileController {
           if (!parent && !name)
             throw new HttpError('name or parent is required', 400);
 
-          const email = req.user.email;
-          const candidate = await this.userService.checkEmail(email);
+          const userId = req.user.id;
+          const candidate = await this.userService.getUserById(userId);
 
           if (!candidate)
             throw new HttpError(
@@ -736,15 +731,15 @@ class FileController {
      */
     this.router.delete(
       `${this.path}/:id/delete`,
-      extractUserEmail,
+      extractUserId,
       async (req: Request, res: Response) => {
         try {
           const id = req.params?.id;
 
           if (!id) throw new HttpError('File id is required', 400);
 
-          const email = req.user.email;
-          const candidate = await this.userService.checkEmail(email);
+          const userId = req.user.id;
+          const candidate = await this.userService.getUserById(userId);
 
           if (!candidate)
             throw new HttpError(

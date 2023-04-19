@@ -3,11 +3,7 @@ import * as jwt from 'jsonwebtoken';
 import { HttpError } from '../utils/Error';
 import { secretKey } from '../auth/constants';
 
-export function extractUserEmail(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
+export function extractUserId(req: Request, res: Response, next: NextFunction) {
   const rawToken = req.headers['authorization'];
 
   if (!rawToken) {
@@ -27,7 +23,7 @@ export function extractUserEmail(
   try {
     const payload = jwt.verify(token, secretKey) as unknown as jwt.JwtPayload;
 
-    req.user = { email: payload.email };
+    req.user = { id: payload.id };
     next();
   } catch (error) {
     next(new HttpError('Invalid JWT token', 401));

@@ -7,10 +7,13 @@ import {
   loginValidation,
   tokenValidation,
 } from '../middleware/validators/validator';
-import { IRegisterUserDto } from './dto/register.dto';
-import { IRefreshTokenDto } from './dto/refresh-token.dto';
 import { UserService } from '../users/users.service';
-import { ILoginBody } from '../middleware/validators/types';
+import {
+  ILoginBody,
+  IRefreshTokensBody,
+  IRegisterBody,
+} from '../middleware/validators/types';
+import { extractUserId } from '../middleware/auth';
 
 /**
  * @swagger
@@ -39,6 +42,7 @@ export class AuthController {
      *     tags: [Auth]
      *     requestBody:
      *       required: true
+     *       description: The request body for log in type of ILoginBody.
      *       content:
      *         application/json:
      *           schema:
@@ -157,11 +161,11 @@ export class AuthController {
      *     tags: [Auth]
      *     requestBody:
      *       required: true
-     *       description: The request body for creating a new user type of IRegisterUserDto.
+     *       description: The request body for creating a new user type of IRegisterBody.
      *       content:
      *         application/json:
      *           schema:
-     *             $ref: '#/components/schemas/IRegisterUserDto'
+     *             $ref: '#/components/schemas/IRegisterBody'
      *     responses:
      *       200:
      *         description: Successful registration
@@ -230,7 +234,7 @@ export class AuthController {
             throw new HttpError(`${errors.array()[0].msg}`, 400);
           }
 
-          const { name, email, password }: IRegisterUserDto = req.body;
+          const { name, email, password }: IRegisterBody = req.body;
 
           const candidate = await this.userService.checkEmail(email);
 
@@ -238,11 +242,11 @@ export class AuthController {
             throw new HttpError(`User with email ${email} aready exist`, 409);
           }
 
-          const newUser = await this.authService.register(
+          const newUser = await this.authService.register({
             name,
             email,
             password,
-          );
+          });
 
           return res.send(newUser);
         } catch (e) {
@@ -265,11 +269,11 @@ export class AuthController {
      *     tags: [Auth]
      *     requestBody:
      *       required: true
-     *       description: The request body for refreshing access and refresh tokens type of IRefreshTokenDto.
+     *       description: The request body for refreshing access and refresh tokens type of IRefreshTokensBody.
      *       content:
      *         application/json:
      *           schema:
-     *             $ref: '#/components/schemas/IRefreshTokenDto'
+     *             $ref: '#/components/schemas/IRefreshTokensBody'
      *     responses:
      *       200:
      *         description: Returns a new access and refresh token.
@@ -320,6 +324,7 @@ export class AuthController {
      */
     this.router.post(
       `${this.path}/refresh-tokens`,
+      extractUserId,
       tokenValidation,
       async (req: Request, res: Response) => {
         try {
@@ -329,7 +334,7 @@ export class AuthController {
             throw new HttpError(`${errors.array()[0].msg}`, 400);
           }
 
-          const { refreshToken }: IRefreshTokenDto = req.body;
+          const { refreshToken }: IRefreshTokensBody = req.body;
           const refreshTokens = this.authService.refreshTokens(refreshToken);
 
           return res.send(refreshTokens);
