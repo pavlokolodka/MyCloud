@@ -4,6 +4,7 @@ import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJSDoc from 'swagger-jsdoc';
 import { ConnectToDb } from './database-connection';
+import { errorHandler } from '../middleware/error';
 
 class Server {
   public app: express.Application;
@@ -15,17 +16,24 @@ class Server {
     this.port = port;
     this.db = ConnectToDb.getDB();
 
-    this.initializeMiddlewares();
+    this.connectToDb();
+    this.initializeBeforeMiddlewares();
     this.initializeControllers(controllers);
     this.initializeDocs();
-    this.connectToDb();
+    this.initializeAfterMiddlewares();
   }
 
-  private initializeMiddlewares() {
-    if (!fs.existsSync(path.resolve('src', 'storage')))
+  private initializeBeforeMiddlewares() {
+    if (!fs.existsSync(path.resolve('src', 'storage'))) {
       fs.mkdirSync(path.resolve('src', 'storage'));
+    }
+
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(express.json());
+  }
+
+  private initializeAfterMiddlewares() {
+    this.app.use(errorHandler);
   }
 
   private initializeDocs() {

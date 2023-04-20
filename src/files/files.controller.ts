@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import https from 'https';
 import { validationResult } from 'express-validator';
 import { IncomingMessage } from 'http';
@@ -113,7 +113,7 @@ class FileController {
     this.router.get(
       `${this.path}/download`,
       extractUserId,
-      async (req: Request, res: Response) => {
+      async (req: Request, res: Response, next: NextFunction) => {
         try {
           const id = req.query.id as string;
 
@@ -142,11 +142,8 @@ class FileController {
               savedFile.secret,
             );
           });
-        } catch (e) {
-          if (!(e instanceof HttpError)) return res.send(e);
-          return res
-            .status(e.status)
-            .send({ message: e.message, status: e.status });
+        } catch (e: unknown) {
+          next(e);
         }
       },
     );
@@ -212,7 +209,7 @@ class FileController {
     this.router.get(
       this.path,
       extractUserId,
-      async (req: Request, res: Response) => {
+      async (req: Request, res: Response, next: NextFunction) => {
         try {
           const { sortBy, parent } = req.query as unknown as IGetFilesParams;
           const userId = req.user.id;
@@ -232,10 +229,7 @@ class FileController {
 
           return res.send(files);
         } catch (e: unknown) {
-          if (!(e instanceof HttpError)) return res.send(e);
-          return res
-            .status(e.status)
-            .send({ message: e.message, status: e.status });
+          next(e);
         }
       },
     );
@@ -312,7 +306,7 @@ class FileController {
     this.router.get(
       `${this.path}/:id`,
       extractUserId,
-      async (req: Request, res: Response) => {
+      async (req: Request, res: Response, next: NextFunction) => {
         try {
           const fileId = req.params.id;
           const userId = req.user.id;
@@ -328,10 +322,7 @@ class FileController {
 
           return res.send(file);
         } catch (e: unknown) {
-          if (!(e instanceof HttpError)) return res.send(e);
-          return res
-            .status(e.status)
-            .send({ message: e.message, status: e.status });
+          next(e);
         }
       },
     );
@@ -400,7 +391,7 @@ class FileController {
       `${this.path}/directory`,
       extractUserId,
       directoryValidation,
-      async (req: Request, res: Response) => {
+      async (req: Request, res: Response, next: NextFunction) => {
         try {
           const errors = validationResult(req);
 
@@ -426,10 +417,7 @@ class FileController {
           );
           return res.send(file);
         } catch (e: unknown) {
-          if (!(e instanceof HttpError)) return res.send(e);
-          return res
-            .status(e.status)
-            .send({ message: e.message, status: e.status });
+          next(e);
         }
       },
     );
@@ -507,7 +495,7 @@ class FileController {
       this.path,
       extractUserId,
       uploadMiddlware,
-      async (req: Request, res: Response) => {
+      async (req: Request, res: Response, next: NextFunction) => {
         try {
           const reqFile: any = req.files?.file;
           const parent = req.fields?.parent as string;
@@ -534,10 +522,7 @@ class FileController {
 
           return res.send(file);
         } catch (e: unknown) {
-          if (!(e instanceof HttpError)) return res.send(e);
-          return res
-            .status(e.status)
-            .send({ message: e.message, status: e.status });
+          next(e);
         }
       },
     );
@@ -626,7 +611,7 @@ class FileController {
       `${this.path}/:id/update`,
       extractUserId,
       updateFileValidation,
-      async (req: Request, res: Response) => {
+      async (req: Request, res: Response, next: NextFunction) => {
         try {
           const { parent, name }: IUpdateFileBody = req.body;
           const fileId = req.params.id;
@@ -654,10 +639,7 @@ class FileController {
 
           return res.send(updatedFile);
         } catch (e) {
-          if (!(e instanceof HttpError)) return res.send(e);
-          return res
-            .status(e.status)
-            .send({ message: e.message, status: e.status });
+          next(e);
         }
       },
     );
@@ -732,7 +714,7 @@ class FileController {
     this.router.delete(
       `${this.path}/:id/delete`,
       extractUserId,
-      async (req: Request, res: Response) => {
+      async (req: Request, res: Response, next: NextFunction) => {
         try {
           const id = req.params?.id;
 
@@ -751,10 +733,7 @@ class FileController {
 
           return res.status(204).send('');
         } catch (e) {
-          if (!(e instanceof HttpError)) return res.send(e);
-          return res
-            .status(e.status)
-            .send({ message: e.message, status: e.status });
+          next(e);
         }
       },
     );

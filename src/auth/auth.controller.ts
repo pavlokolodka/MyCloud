@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
 import { HttpError } from '../utils/Error';
 import { AuthService } from './auth.service';
@@ -118,7 +118,7 @@ export class AuthController {
     this.router.post(
       `${this.path}/login`,
       loginValidation,
-      async (req: Request, res: Response) => {
+      async (req: Request, res: Response, next: NextFunction) => {
         try {
           const errors = validationResult(req);
 
@@ -141,14 +141,8 @@ export class AuthController {
           });
 
           return res.send(singInUser);
-        } catch (e) {
-          if (!(e instanceof HttpError)) {
-            return res.status(500).send('Internal server error');
-          }
-
-          return res
-            .status(e.status)
-            .send({ message: e.message, status: e.status });
+        } catch (e: unknown) {
+          next(e);
         }
       },
     );
@@ -226,7 +220,7 @@ export class AuthController {
     this.router.post(
       `${this.path}/register`,
       isValidUser,
-      async (req: Request, res: Response) => {
+      async (req: Request, res: Response, next: NextFunction) => {
         try {
           const errors = validationResult(req);
 
@@ -249,14 +243,8 @@ export class AuthController {
           });
 
           return res.send(newUser);
-        } catch (e) {
-          if (!(e instanceof HttpError)) {
-            return res.status(500).send('Internal server error');
-          }
-
-          return res
-            .status(e.status)
-            .send({ message: e.message, status: e.status });
+        } catch (e: unknown) {
+          next(e);
         }
       },
     );
@@ -326,7 +314,7 @@ export class AuthController {
       `${this.path}/refresh-tokens`,
       extractUserId,
       tokenValidation,
-      async (req: Request, res: Response) => {
+      async (req: Request, res: Response, next: NextFunction) => {
         try {
           const errors = validationResult(req);
 
@@ -338,15 +326,8 @@ export class AuthController {
           const refreshTokens = this.authService.refreshTokens(refreshToken);
 
           return res.send(refreshTokens);
-        } catch (e) {
-          if (!(e instanceof HttpError)) {
-            return res.status(500).send('Internal server error');
-          }
-
-          return res
-            .set('WWW-Authenticate', 'Bearer')
-            .status(e.status)
-            .send({ message: e.message, status: e.status });
+        } catch (e: unknown) {
+          next(e);
         }
       },
     );
