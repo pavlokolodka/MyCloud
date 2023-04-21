@@ -1,10 +1,12 @@
 import 'dotenv/config';
-import FileController from './files/files.controller';
 import Server from './configuration/server';
-import { AuthController } from './auth/auth.controller';
+import ControllerFactory from './utils/controller.factory';
+import FileModule from './files/files.module';
+import AuthModule from './auth/auth.module';
 
 const port = Number(process.env.PORT) || 5000;
-
-const app = new Server([new FileController(), new AuthController()], port);
+const authController = ControllerFactory.createController(AuthModule);
+const fileController = ControllerFactory.createController(FileModule);
+const app = new Server([...fileController, ...authController], port);
 
 app.listen();

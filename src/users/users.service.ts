@@ -1,27 +1,26 @@
 import { CreateUserDto } from './dto/create-user.dto';
 import { IUser } from './model/users.interface';
-import { UserRepository } from './model/users.repository';
 import { IUserRepository } from './model/users.repository-interface';
 
 export class UserService {
-  private userRepo: IUserRepository<IUser>;
+  private userRepository: IUserRepository<IUser>;
 
-  constructor() {
-    this.userRepo = new UserRepository();
+  constructor(userRepo: IUserRepository<IUser>) {
+    this.userRepository = userRepo;
   }
 
   public checkEmail(email: string) {
-    const user = this.userRepo.getOne({ email: email });
+    const user = this.userRepository.getOne({ email: email });
     return user;
   }
 
   public getUserById(id: string) {
-    const user = this.userRepo.getOne({ _id: id });
+    const user = this.userRepository.getOne({ _id: id });
     return user;
   }
 
   public create(payload: CreateUserDto) {
-    const user = this.userRepo.create(payload);
+    const user = this.userRepository.create(payload);
     return user;
   }
 }
