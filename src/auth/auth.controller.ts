@@ -27,9 +27,9 @@ export class AuthController {
   private authService: AuthService;
   private userService: UserService;
 
-  constructor() {
-    this.userService = new UserService();
-    this.authService = new AuthService(this.userService);
+  constructor(authService: AuthService, userService: UserService) {
+    this.userService = userService;
+    this.authService = authService;
     this.intializeRoutes();
   }
 

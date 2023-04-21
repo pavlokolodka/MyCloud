@@ -32,9 +32,9 @@ class FileController {
   private fileService: FileService;
   private userService: UserService;
 
-  constructor() {
-    this.fileService = new FileService();
-    this.userService = new UserService();
+  constructor(fileService: FileService, userService: UserService) {
+    this.fileService = fileService;
+    this.userService = userService;
     this.intializeRoutes();
   }
 
