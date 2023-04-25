@@ -39,9 +39,9 @@ npm run dev
 ## API Documentation
 
 MyCloud provides a RESTful API for file management and user authentication. Detailed documentation of the API endpoints and usage can be found in
-```
-localhost:5000/api
-```
+
+[localhost:5000/api](http://localhost:5000/api)
+
 
 ## Technologies Used
 
