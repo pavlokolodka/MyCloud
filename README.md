@@ -48,6 +48,9 @@ localhost:5000/api
 - Node.js: A popular and widely-used JavaScript runtime that allows server-side execution of JavaScript code.
 - Express: A fast and flexible web application framework for Node.js that simplifies routing, middleware handling, and other common web development tasks.
 - MongoDB: A popular NoSQL database that provides flexibility and scalability for storing and managing large amounts of data, making it suitable for handling file storage requirements.
+- JWT (JSON Web Token): A widely used authentication and authorization mechanism for securing web applications, providing a stateless and secure way of transmitting user authentication data between client and server.
+- TypeScript: A superset of JavaScript that provides static typing, better tooling, and enhanced scalability for larger applications, ensuring code quality and robustness.
+- OpenAPI: A specification for describing RESTful APIs using a standard language- and framework-agnostic format, allowing for better documentation, testing, and client code generation.
 
 ## Contributing
 
