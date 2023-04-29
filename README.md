@@ -25,14 +25,13 @@ cp .env.example .env
 ```bash
 npm install
 ```
-4. Start the MyCloud server. There are two available scripts depending on the mode you want to run:
-<br/>
+4. Start the MyCloud server. There are two available scripts depending on the mode you want to run:<br/>
 - For production mode:
 ```bash
 npm run build
 npm run start
 ```
-- For development mode (with nodemon for auto-reloading):
+- For development mode (with nodemon for auto-reloading):<br/>
 ```bash
 npm run dev
 ```
