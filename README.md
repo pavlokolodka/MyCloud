@@ -39,7 +39,7 @@ npm run dev
 
 MyCloud provides a RESTful API for file management and user authentication. Detailed documentation of the API endpoints and usage can be found in
 
-[localhost:5000/api](http://localhost:5000/api)
+> [localhost:5000/api](http://localhost:5000/api)
 
 
 ## Technologies Used
@@ -50,6 +50,9 @@ MyCloud provides a RESTful API for file management and user authentication. Deta
 - JWT (JSON Web Token): A widely used authentication and authorization mechanism for securing web applications, providing a stateless and secure way of transmitting user authentication data between client and server.
 - TypeScript: A superset of JavaScript that provides static typing, better tooling, and enhanced scalability for larger applications, ensuring code quality and robustness.
 - OpenAPI: A specification for describing RESTful APIs using a standard language- and framework-agnostic format, allowing for better documentation, testing, and client code generation.
+
+## TODO
+> [MyCloud todo board](https://www.notion.so/MyCloud-TODO-1e488a58e519480dac618b4822be129a)
 
 ## Contributing
 
