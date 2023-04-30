@@ -3,6 +3,7 @@ import { CreateUserDto } from '../../../src/users/dto/create-user.dto';
 import { IUser } from '../../../src/users/model/users.interface';
 import { IUserRepository } from '../../../src/users/model/users.repository-interface';
 import { deleteResultMock, updateResultMock, userMock } from './user.mock';
+import { UpdateUserDto } from '../../../src/users/dto/update-user.dto';
 
 export default class MockUserRepository implements IUserRepository<IUser> {
   public async create(query: CreateUserDto) {
@@ -19,7 +20,7 @@ export default class MockUserRepository implements IUserRepository<IUser> {
     return userMock;
   }
 
-  public async getAll(query: object) {
+  public async getAll() {
     return [userMock];
   }
 
@@ -33,7 +34,7 @@ export default class MockUserRepository implements IUserRepository<IUser> {
     return null;
   }
 
-  public async update(query: IUser) {
+  public async update(id: string, payload: UpdateUserDto) {
     return updateResultMock;
   }
 
