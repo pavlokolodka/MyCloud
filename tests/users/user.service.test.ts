@@ -8,6 +8,15 @@ import { IUserRepository } from '../../src/users/model/users.repository-interfac
 describe('UserService', () => {
   let userService: UserService;
   let mockUserRepository: IUserRepository<IUser>;
+  const userShape: IUser = {
+    _id: expect.any(mongoose.Types.ObjectId),
+    name: expect.any(String),
+    email: expect.any(String),
+    password: expect.any(String),
+    createdAt: expect.any(Date),
+    updatedAt: expect.any(Date),
+    save: expect.any(Function),
+  };
 
   beforeEach(() => {
     mockUserRepository = new MockUserRepository();
@@ -18,6 +27,8 @@ describe('UserService', () => {
     it('should return a user object when a user with the email exists', async () => {
       const userEmail = 'johndoe@example.com';
       const result = await userService.checkEmail(userEmail);
+
+      expect(result).toMatchObject<IUser>(userShape);
       expect(result).toEqual<IUser>(userMock);
     });
 
@@ -34,6 +45,8 @@ describe('UserService', () => {
         new mongoose.Types.ObjectId('60958c9f0000000000000000'),
       );
       const result = await userService.getUserById(userId);
+
+      expect(result).toMatchObject<IUser>(userShape);
       expect(result).toEqual<IUser>(userMock);
     });
 
@@ -51,8 +64,12 @@ describe('UserService', () => {
         email: 'test@test.com',
         password: 'password',
       };
+
       const result = await userService.create(userPayload);
-      expect(result).toEqual<IUser>(userMock);
+      expect(result.name).toEqual(userPayload.name);
+      expect(result.email).toEqual(userPayload.email);
+      expect(result.password).toEqual(userPayload.password);
+      expect(result).toMatchObject<IUser>(userShape);
     });
   });
 });
