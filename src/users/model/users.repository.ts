@@ -1,4 +1,3 @@
-import { HttpError } from '../../utils/Error';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { IUser } from './users.interface';
 import { User } from './users.model';
@@ -8,42 +7,26 @@ export class UserRepository implements IUserRepository<IUser> {
   constructor(private database = User) {}
 
   public async create(query: CreateUserDto) {
-    try {
-      return await this.database.create(query);
-    } catch (e) {
-      throw new HttpError('creation error', 500);
-    }
+    return await this.database.create(query);
   }
 
   public async getAll(query: object) {
-    try {
-      return await this.database.find(query);
-    } catch (e) {
-      throw new HttpError('can not get users', 500);
-    }
+    return await this.database.find(query);
   }
 
-  public async getOne(query: object) {
-    try {
-      return await this.database.findOne(query);
-    } catch (e) {
-      throw new HttpError('can not get user', 500);
-    }
+  public async getOne(id: string) {
+    return await this.database.findOne({ _id: id });
+  }
+
+  public async getByEmail(email: string) {
+    return await this.database.findOne({ email: email });
   }
 
   public async update(query: IUser) {
-    try {
-      return await this.database.updateOne(query);
-    } catch (e) {
-      throw new HttpError('update error', 500);
-    }
+    return await this.database.updateOne(query);
   }
 
   public async delete(query: object) {
-    try {
-      return await this.database.deleteOne(query);
-    } catch (e) {
-      throw new HttpError('deletion error', 500);
-    }
+    return await this.database.deleteOne(query);
   }
 }
