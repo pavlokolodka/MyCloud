@@ -10,12 +10,12 @@ export class UserService {
   }
 
   public checkEmail(email: string) {
-    const user = this.userRepository.getOne({ email: email });
+    const user = this.userRepository.getByEmail(email);
     return user;
   }
 
   public getUserById(id: string) {
-    const user = this.userRepository.getOne({ _id: id });
+    const user = this.userRepository.getOne(id);
     return user;
   }
 
