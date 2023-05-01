@@ -15,7 +15,6 @@ describe('UserService', () => {
     password: expect.any(String),
     createdAt: expect.any(Date),
     updatedAt: expect.any(Date),
-    save: expect.any(Function),
   };
 
   beforeEach(() => {
@@ -23,10 +22,10 @@ describe('UserService', () => {
     userService = new UserService(mockUserRepository);
   });
 
-  describe('checkEmail', () => {
+  describe('getUserByEmail', () => {
     it('should return a user object when a user with the email exists', async () => {
       const userEmail = 'johndoe@example.com';
-      const result = await userService.checkEmail(userEmail);
+      const result = await userService.getUserByEmail(userEmail);
 
       expect(result).toMatchObject<IUser>(userShape);
       expect(result).toEqual<IUser>(userMock);
@@ -34,7 +33,7 @@ describe('UserService', () => {
 
     it('should return null when a user with the email does not exist', async () => {
       const userEmail = 'nonexistent@test.com';
-      const result = await userService.checkEmail(userEmail);
+      const result = await userService.getUserByEmail(userEmail);
       expect(result).toBeNull();
     });
   });
