@@ -1,7 +1,6 @@
 import { unlink } from 'node:fs';
 import { Types } from 'mongoose';
 import { BotService } from '../bot/bot.service';
-import { FileRepository } from './model/files.repository';
 import { isValidObjectId } from '../utils/isObjectId';
 import { HttpError } from '../utils/Error';
 import { IFile } from './model/files.interface';
@@ -123,8 +122,7 @@ class FileService {
       userId: userId,
     });
 
-    fileParent.childs?.push(file._id);
-    await fileParent.save();
+    await this.fileRepository.addChilds(fileParent._id, [file._id]);
 
     return file;
   }
@@ -155,8 +153,7 @@ class FileService {
       childs: [],
     });
 
-    parentDirectory.childs?.push(directory._id);
-    await parentDirectory.save();
+    await this.fileRepository.addChilds(parentDirectory._id, [directory._id]);
 
     return directory;
   }
@@ -172,6 +169,7 @@ class FileService {
     if (name && parentId) {
       const newParentDirectory = await this.getFileParent(parentId, userId);
 
+      // delete all the files from old parent directory
       if (file.parent) {
         const parentDirectory = await this.getFileParent(
           String(file.parent),
@@ -180,36 +178,47 @@ class FileService {
         let index = parentDirectory.childs?.indexOf(
           file._id,
         ) as unknown as number;
-        const array = parentDirectory.childs!;
+        const array = parentDirectory.childs || [];
 
         while (index !== -1) {
           parentDirectory.childs?.splice(index, 1);
           index = array.indexOf(file._id);
         }
 
-        await parentDirectory.save();
+        await this.fileRepository.saveNewChilds(
+          parentDirectory._id,
+          parentDirectory.childs,
+        );
       }
 
-      newParentDirectory.childs?.push(file._id);
-      await newParentDirectory.save();
+      await this.fileRepository.addChilds(newParentDirectory._id, [file._id]);
 
+      const newFileName = name + '.' + file.type;
       file.parent = newParentDirectory._id;
-      file.name = name + '.' + file.type;
-      const updatedFile = await file.save();
+      file.name = newFileName;
 
-      return updatedFile;
+      await this.fileRepository.update({
+        fileId: file._id,
+        name: newFileName,
+        parent: newParentDirectory._id,
+      });
+
+      return file;
     }
 
     if (name) {
-      file.name = name + '.' + file.type;
-      const updatedFile = await file.save();
+      const newFileName = name + '.' + file.type;
+      file.name = newFileName;
 
-      return updatedFile;
+      await this.fileRepository.update({ fileId: file._id, name: newFileName });
+
+      return file;
     }
 
     if (parentId) {
       const newParentDirectory = await this.getFileParent(parentId, userId);
 
+      // delete all the files from old parent directory
       if (file.parent) {
         const parentDirectory = await this.getFileParent(
           String(file.parent),
@@ -218,23 +227,29 @@ class FileService {
         let index = parentDirectory.childs?.indexOf(
           file._id,
         ) as unknown as number;
-        const array = parentDirectory.childs!;
+        const array = parentDirectory.childs || [];
 
         while (index !== -1) {
           parentDirectory.childs?.splice(index, 1);
           index = array.indexOf(file._id);
         }
 
-        await parentDirectory.save();
+        await this.fileRepository.saveNewChilds(
+          parentDirectory._id,
+          parentDirectory.childs,
+        );
       }
 
-      newParentDirectory.childs?.push(file._id);
-      await newParentDirectory.save();
+      await this.fileRepository.addChilds(newParentDirectory._id, [file._id]);
 
       file.parent = newParentDirectory._id;
-      const updatedFile = await file.save();
 
-      return updatedFile;
+      await this.fileRepository.update({
+        fileId: file._id,
+        parent: newParentDirectory._id,
+      });
+
+      return file;
     }
   }
 
@@ -307,9 +322,8 @@ class FileService {
         Number(file.updatedAt) + oneHour <= Date.now()
       ) {
         const newLink = await this.getLink(file.storageId!);
-        file.link = newLink;
-        file.updatedAt = new Date(Date.now());
-        await file.save();
+
+        await this.fileRepository.saveFileLink(file._id, newLink);
       }
     });
   }

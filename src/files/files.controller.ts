@@ -530,7 +530,7 @@ class FileController {
     /**
      * @swagger
      *
-     * /files/{id}/update:
+     * /files/{id}:
      *   patch:
      *     summary: Update a file by ID.
      *     tags:
@@ -608,7 +608,7 @@ class FileController {
      *               $ref: '#/components/schemas/HttpError'
      */
     this.router.patch(
-      `${this.path}/:id/update`,
+      `${this.path}/:id`,
       extractUserId,
       updateFileValidation,
       async (req: Request, res: Response, next: NextFunction) => {
@@ -646,7 +646,7 @@ class FileController {
 
     /**
      * @swagger
-     * /files/{id}/delete:
+     * /files/{id}:
      *   delete:
      *     summary: Delete a file by ID.
      *     tags: [Files]
@@ -712,7 +712,7 @@ class FileController {
      *               $ref: '#/components/schemas/HttpError'
      */
     this.router.delete(
-      `${this.path}/:id/delete`,
+      `${this.path}/:id`,
       extractUserId,
       async (req: Request, res: Response, next: NextFunction) => {
         try {

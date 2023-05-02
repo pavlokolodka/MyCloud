@@ -12,5 +12,4 @@ export interface IFile {
   userId: IUser['_id'];
   childs?: IFile['_id'][];
   parent: IFile['_id'] | null;
-  save: () => Promise<this>;
 }
