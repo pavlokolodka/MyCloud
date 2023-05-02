@@ -14,7 +14,6 @@ export default class MockUserRepository implements IUserRepository<IUser> {
       password: query.password,
       createdAt: new Date(),
       updatedAt: new Date(),
-      save: jest.fn(),
     };
 
     return userMock;

@@ -127,7 +127,7 @@ export class AuthController {
           }
 
           const { email, password }: ILoginBody = req.body;
-          const candidate = await this.userService.checkEmail(email);
+          const candidate = await this.userService.getUserByEmail(email);
 
           if (!candidate)
             throw new HttpError(`User with email ${email} doesn't exist`, 404);
@@ -230,7 +230,7 @@ export class AuthController {
 
           const { name, email, password }: IRegisterBody = req.body;
 
-          const candidate = await this.userService.checkEmail(email);
+          const candidate = await this.userService.getUserByEmail(email);
 
           if (candidate) {
             throw new HttpError(`User with email ${email} aready exist`, 409);

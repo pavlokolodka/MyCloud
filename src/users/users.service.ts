@@ -9,7 +9,7 @@ export class UserService {
     this.userRepository = userRepo;
   }
 
-  public checkEmail(email: string) {
+  public getUserByEmail(email: string) {
     const user = this.userRepository.getByEmail(email);
     return user;
   }

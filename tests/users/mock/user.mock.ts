@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import { IUser } from '../../../src/users/model/users.interface';
 import { UpdateResult, DeleteResult } from 'mongodb';
+import { IUser } from '../../../src/users/model/users.interface';
 
 export const userMock: IUser = {
   _id: new mongoose.Types.ObjectId('60958c9f0000000000000000'),
@@ -9,7 +9,6 @@ export const userMock: IUser = {
   password: 'password',
   createdAt: new Date(),
   updatedAt: new Date(),
-  save: jest.fn().mockResolvedValue(this),
 };
 
 export const deleteResultMock: DeleteResult = {
