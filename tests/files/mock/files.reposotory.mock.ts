@@ -2,24 +2,26 @@ import { Types } from 'mongoose';
 import { CreateFileDto } from '../../../src/files/dto/create-file.dto';
 import { IFile } from '../../../src/files/model/files.interface';
 import { IFileRepository } from '../../../src/files/model/files.repository-interface';
-import { fileMock } from './files.mock';
+import { fileMock, filesMock } from './files.mock';
 import { deleteResultMock, updateResultMock } from '../../users/mock/user.mock';
 import { UpdateFileDto } from '../../../src/files/dto/update-file.dto';
-import { UpdateResult } from 'mongodb';
+import { Sort } from '../../../src/files/types/files.sort';
 
 export default class MockFileRepository implements IFileRepository<IFile> {
-  addChilds: (
-    parentId: Types.ObjectId,
-    childIds: Types.ObjectId[],
-  ) => Promise<UpdateResult>;
-  saveNewChilds: (
+  public addChilds(parentId: Types.ObjectId, childIds: Types.ObjectId[]) {
+    return Promise.resolve(updateResultMock);
+  }
+  public saveNewChilds(
     parentId: Types.ObjectId,
     childIds: Types.ObjectId[] | undefined,
-  ) => Promise<UpdateResult>;
-  saveFileLink: (
-    fileId: Types.ObjectId,
-    newLink: string,
-  ) => Promise<UpdateResult>;
+  ) {
+    return Promise.resolve(updateResultMock);
+  }
+
+  public saveFileLink(fileId: Types.ObjectId, newLink: string) {
+    return Promise.resolve(updateResultMock);
+  }
+
   public create(query: CreateFileDto) {
     const newFile: IFile = {
       _id: new Types.ObjectId('50958c9f0000000000000000'),
@@ -38,12 +40,16 @@ export default class MockFileRepository implements IFileRepository<IFile> {
     return Promise.resolve(newFile);
   }
 
-  public getAll(query: object, sortBy: string) {
-    return Promise.resolve([fileMock]);
+  public getAll(query: object, sortBy?: Sort) {
+    return Promise.resolve(filesMock);
   }
 
-  public getOne(query: object) {
-    return Promise.resolve(fileMock);
+  public getOne(id: Types.ObjectId) {
+    if (String(id) === String(fileMock._id)) {
+      return Promise.resolve(fileMock);
+    }
+
+    return Promise.resolve(null);
   }
 
   public getOneWithUser(query: object, userId: Types.ObjectId) {

@@ -1,3 +1,5 @@
+import { Sort } from '../../files/types/files.sort';
+
 /**
  * @swagger
  * components:
@@ -127,6 +129,6 @@ export interface IUpdateFileBody {
  *       description: Specifies the ID of the parent directory whose files are to be fetched. If not provided, the files from root directory will be fetched.
  */
 export interface IGetFilesParams {
-  sortBy: string;
-  parent: string;
+  sortBy: Sort;
+  parent?: string;
 }

@@ -2,11 +2,12 @@ import { UpdateResult, DeleteResult } from 'mongodb';
 import mongoose from 'mongoose';
 import { CreateFileDto } from '../dto/create-file.dto';
 import { UpdateFileDto } from '../dto/update-file.dto';
+import { Sort } from '../types/files.sort';
 
 export interface IFileRepository<T> {
   create: (query: CreateFileDto) => Promise<T>;
-  getAll: (query: object, sortBy: string) => Promise<T[]>;
-  getOne: (query: object) => Promise<T | null>;
+  getAll: (query: object, sortBy?: Sort) => Promise<T[]>;
+  getOne: (id: mongoose.Types.ObjectId) => Promise<T | null>;
   getOneWithUser: (
     query: object,
     userId: mongoose.Types.ObjectId,

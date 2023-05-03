@@ -222,9 +222,9 @@ class FileController {
             );
 
           const files = await this.fileService.getAll(
-            sortBy,
-            parent,
             candidate._id,
+            parent,
+            sortBy,
           );
 
           return res.send(files);

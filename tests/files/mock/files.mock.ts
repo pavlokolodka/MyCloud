@@ -8,6 +8,31 @@ export const fileMock: IFile = {
   createdAt: new Date(),
   updatedAt: new Date(),
   type: 'png',
-  userId: new Types.ObjectId('40958c9f0000000000000000'),
+  userId: new Types.ObjectId('64520c9ea01cb5187c1090cb'),
   parent: null,
 };
+
+export const filesMock: IFile[] = [
+  {
+    _id: new Types.ObjectId(),
+    name: 'file2',
+    parent: new Types.ObjectId(),
+    userId: new Types.ObjectId('64520c9ea01cb5187c1090cb'),
+    size: 2048,
+    type: 'jpg',
+    link: 'http://localhost:9000/',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    _id: new Types.ObjectId(),
+    name: 'file2',
+    parent: new Types.ObjectId(),
+    userId: new Types.ObjectId('64520c9ea01cb5187c1090cb'),
+    size: 2048,
+    type: 'json',
+    link: 'http://localhost:9000/',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+];

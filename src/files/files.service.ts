@@ -11,6 +11,7 @@ import {
 } from '../bot/types/telegram-file.type';
 import { FileOptions } from './types/file-options.type';
 import DataEncode from '../utils/file-encryption/encrypt';
+import { Sort } from './types/files.sort';
 
 class FileService {
   private fileRepository: IFileRepository<IFile>;
@@ -21,7 +22,7 @@ class FileService {
     this.botService = botService;
   }
 
-  async getAll(sort: string, parent: string, userId: Types.ObjectId) {
+  async getAll(userId: Types.ObjectId, parent?: string, sort?: Sort) {
     if (parent) {
       const parentDirectory = await this.getFileParent(parent, userId);
     }
@@ -30,8 +31,6 @@ class FileService {
       { parent: parent, userId: userId },
       sort,
     );
-
-    if (!files) throw new HttpError('Can not get files', 500);
 
     await this.checkLinkExp(files);
 
@@ -43,7 +42,7 @@ class FileService {
 
     if (!isValidId) throw new HttpError('File id is not valid', 400);
 
-    const file = await this.fileRepository.getOne({ _id: id });
+    const file = await this.fileRepository.getOne(new Types.ObjectId(id));
 
     if (!file) throw new HttpError('File not found', 404);
 
@@ -280,7 +279,9 @@ class FileService {
 
     if (!isValidId) throw new HttpError('Directory id is not valid', 400);
 
-    const fileParent = await this.fileRepository.getOne({ _id: parentId });
+    const fileParent = await this.fileRepository.getOne(
+      new Types.ObjectId(parentId),
+    );
 
     if (!fileParent || fileParent.type !== 'directory') {
       throw new HttpError('Directory not exist', 404);

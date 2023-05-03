@@ -1,9 +1,10 @@
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { IFileRepository } from './files.repository-interface';
 import { IFile } from './files.interface';
 import { File } from './files.model';
 import { CreateFileDto } from '../dto/create-file.dto';
 import { UpdateFileDto } from '../dto/update-file.dto';
+import { Sort } from '../types/files.sort';
 
 export class FileRepository implements IFileRepository<IFile> {
   constructor(private database = File) {}
@@ -12,7 +13,7 @@ export class FileRepository implements IFileRepository<IFile> {
     return await this.database.create(query);
   }
 
-  public async getAll(query: object = {}, sortBy: string) {
+  public async getAll(query: object = {}, sortBy?: Sort) {
     let files;
     switch (sortBy) {
       case 'name':
@@ -22,7 +23,7 @@ export class FileRepository implements IFileRepository<IFile> {
         files = await this.database.find(query).sort({ type: 1 });
         break;
       case 'date':
-        files = await this.database.find(query).sort({ date: 1 });
+        files = await this.database.find(query).sort({ createdAt: 1 });
         break;
       default:
         files = await this.database.find(query);
@@ -31,8 +32,8 @@ export class FileRepository implements IFileRepository<IFile> {
     return files;
   }
 
-  public async getOne(query: object) {
-    const file = await this.database.findOne(query);
+  public async getOne(id: Types.ObjectId) {
+    const file = await this.database.findOne({ _id: id });
 
     return file;
   }
