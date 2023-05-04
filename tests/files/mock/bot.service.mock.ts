@@ -1,4 +1,5 @@
 import { FileOptions } from '../../../src/files/types/file-options.type';
+import { telegramAudioDocumentMock, telegramDocumentMock } from './files.mock';
 
 export default class MockBotService {
   greet() {
@@ -10,7 +11,11 @@ export default class MockBotService {
   }
 
   sendDocs(file: any, fileOptions: FileOptions) {
-    return Promise.resolve(`Successfully sent document: ${file}`);
+    if (fileOptions.type.split('/')[0] === 'audio') {
+      return Promise.resolve(telegramAudioDocumentMock);
+    }
+
+    return Promise.resolve(telegramDocumentMock);
   }
 
   sendAudio(file: any) {

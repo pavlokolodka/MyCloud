@@ -340,10 +340,7 @@ class FileService {
 
     this.deleteFromDisk(encryptedFilePath);
 
-    if (fileOptions.type.split('/')[0] === 'audio')
-      return file as TelegramAudioDocument;
-
-    return file as TelegramDocument;
+    return file;
   }
 
   private deleteFromDisk(path: string) {

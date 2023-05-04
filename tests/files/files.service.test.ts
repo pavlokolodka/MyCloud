@@ -6,17 +6,34 @@ import { BotService } from '../../src/bot/bot.service';
 import { IFileRepository } from '../../src/files/model/files.repository-interface';
 import { IFile } from '../../src/files/model/files.interface';
 import MockBotService from './mock/bot.service.mock';
-import { fileMock, filesMock } from './mock/files.mock';
+import {
+  fileMock,
+  filesMock,
+  telegramAudioDocumentMock,
+  telegramDocumentMock,
+} from './mock/files.mock';
 import { Sort } from '../../src/files/types/files.sort';
 import { HttpError } from '../../src/utils/Error';
+import { promises } from 'node:fs';
+import path from 'node:path';
 
 describe('FileService', () => {
   let fileRepository: IFileRepository<IFile>;
   let botService: BotService;
   let fileService: FileService;
   const userId = new Types.ObjectId('64520c9ea01cb5187c1090cb');
+  const mockDirectory = {
+    _id: new Types.ObjectId(),
+    name: 'directory name',
+    parent: null,
+    userId: userId,
+    size: 2048,
+    type: 'directory',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
 
-  beforeAll(() => {
+  beforeEach(() => {
     fileRepository = new MockFileRepository();
     botService = new MockBotService() as unknown as BotService;
 
@@ -26,16 +43,9 @@ describe('FileService', () => {
   describe('getAll', () => {
     it('should return an array of files with all valid parameters', async () => {
       const testParentId = new Types.ObjectId();
-      jest.spyOn(fileRepository, 'getOne').mockImplementationOnce(async () => ({
-        _id: new Types.ObjectId(),
-        name: 'file2',
-        parent: testParentId,
-        userId: new Types.ObjectId('64520c9ea01cb5187c1090cb'),
-        size: 2048,
-        type: 'directory',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }));
+      jest
+        .spyOn(fileRepository, 'getOne')
+        .mockImplementationOnce(async () => mockDirectory);
       const result = await fileService.getAll(
         userId,
         String(testParentId),
@@ -48,16 +58,9 @@ describe('FileService', () => {
 
     it('should return an array of files only with parent parameter', async () => {
       const testParentId = new Types.ObjectId();
-      jest.spyOn(fileRepository, 'getOne').mockImplementationOnce(async () => ({
-        _id: new Types.ObjectId(),
-        name: 'file2',
-        parent: testParentId,
-        userId: new Types.ObjectId('64520c9ea01cb5187c1090cb'),
-        size: 2048,
-        type: 'directory',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }));
+      jest
+        .spyOn(fileRepository, 'getOne')
+        .mockImplementationOnce(async () => mockDirectory);
       const result = await fileService.getAll(
         userId,
         String(testParentId),
@@ -140,24 +143,12 @@ describe('FileService', () => {
     });
 
     it('should throw an error if the file is a directory', async () => {
-      const directoryId = new Types.ObjectId();
-      const mockDirectory = {
-        _id: directoryId,
-        name: 'directory name',
-        parent: null,
-        userId: userId,
-        size: 2048,
-        type: 'directory',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
       jest
         .spyOn(fileRepository, 'getOne')
         .mockImplementationOnce(async () => mockDirectory);
 
       expect(
-        fileService.download(String(directoryId), userId),
+        fileService.download(String(mockDirectory._id), userId),
       ).rejects.toBeInstanceOf(HttpError);
 
       jest
@@ -165,7 +156,7 @@ describe('FileService', () => {
         .mockImplementationOnce(async () => mockDirectory);
 
       expect(
-        fileService.download(String(directoryId), userId),
+        fileService.download(String(mockDirectory._id), userId),
       ).rejects.toMatchObject({
         message: 'Can not get folder',
         status: 400,
@@ -205,6 +196,342 @@ describe('FileService', () => {
       ).rejects.toMatchObject({
         message: 'User not have permission to access this file',
         status: 403,
+      });
+    });
+  });
+
+  describe('create', () => {
+    it('should create a new file', async () => {
+      const filePath = path.resolve(
+        __dirname,
+        '..',
+        '..',
+        'src',
+        'storage',
+        'test.txt',
+      );
+      const newMockFile = await promises.writeFile(filePath, 'test content');
+      const reqFile = {
+        name: 'test.txt',
+        type: 'text/plain',
+        size: 123,
+        path: filePath,
+      };
+
+      const result = await fileService.create(reqFile, userId);
+
+      expect(result).toBeDefined();
+      expect(result).toEqual<IFile>({
+        _id: expect.any(Types.ObjectId),
+        name: reqFile.name,
+        size: reqFile.size,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        type: 'txt',
+        userId: userId,
+        parent: null,
+        link: `https://example.com/${telegramDocumentMock.document.file_id}`,
+        storageId: telegramDocumentMock.document.file_id,
+        childs: undefined,
+      });
+    });
+
+    it('should create a new audio file', async () => {
+      const filePath = path.resolve(
+        __dirname,
+        '..',
+        '..',
+        'src',
+        'storage',
+        'sample.mp3',
+      );
+      const newMockFile = await promises.writeFile(filePath, 'test content');
+      const reqFile = {
+        name: 'sample.mp3',
+        type: 'audio/mpeg',
+        size: 123,
+        path: filePath,
+      };
+
+      const result = await fileService.create(reqFile, userId);
+
+      expect(result).toBeDefined();
+      expect(result).toEqual<IFile>({
+        _id: expect.any(Types.ObjectId),
+        name: reqFile.name,
+        size: reqFile.size,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        type: 'mp3',
+        userId: userId,
+        parent: null,
+        link: `https://example.com/${telegramAudioDocumentMock.audio.file_id}`,
+        storageId: telegramAudioDocumentMock.audio.file_id,
+        childs: undefined,
+      });
+    });
+
+    it('should create a new file with parent id', async () => {
+      const filePath = path.resolve(
+        __dirname,
+        '..',
+        '..',
+        'src',
+        'storage',
+        'test.txt',
+      );
+      const newMockFile = await promises.writeFile(filePath, 'test content');
+      const reqFile = {
+        name: 'test.txt',
+        type: 'text/plain',
+        size: 123,
+        path: filePath,
+      };
+
+      jest
+        .spyOn(fileRepository, 'getOne')
+        .mockImplementationOnce(async () => mockDirectory);
+
+      const result = await fileService.create(
+        reqFile,
+        userId,
+        String(mockDirectory._id),
+      );
+
+      expect(result).toBeDefined();
+      expect(result).toEqual<IFile>({
+        _id: expect.any(Types.ObjectId),
+        name: reqFile.name,
+        size: reqFile.size,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        type: 'txt',
+        userId: userId,
+        parent: mockDirectory._id,
+        link: `https://example.com/${telegramDocumentMock.document.file_id}`,
+        storageId: telegramDocumentMock.document.file_id,
+        childs: undefined,
+      });
+    });
+
+    it('should create a new audio file with parent id', async () => {
+      const filePath = path.resolve(
+        __dirname,
+        '..',
+        '..',
+        'src',
+        'storage',
+        'sample.mp3',
+      );
+      const newMockFile = await promises.writeFile(filePath, 'test content');
+      const reqFile = {
+        name: 'sample.mp3',
+        type: 'audio/mpeg',
+        size: 123,
+        path: filePath,
+      };
+
+      jest
+        .spyOn(fileRepository, 'getOne')
+        .mockImplementationOnce(async () => mockDirectory);
+
+      const result = await fileService.create(
+        reqFile,
+        userId,
+        String(mockDirectory._id),
+      );
+
+      expect(result).toBeDefined();
+      expect(result).toEqual<IFile>({
+        _id: expect.any(Types.ObjectId),
+        name: reqFile.name,
+        size: reqFile.size,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        type: 'mp3',
+        userId: userId,
+        parent: mockDirectory._id,
+        link: `https://example.com/${telegramAudioDocumentMock.audio.file_id}`,
+        storageId: telegramAudioDocumentMock.audio.file_id,
+        childs: undefined,
+      });
+    });
+
+    it('should throw an error when create a new file with id that belongs to plain file (not directory)', async () => {
+      const filePath = path.resolve(
+        __dirname,
+        '..',
+        '..',
+        'src',
+        'storage',
+        'test.txt',
+      );
+      const newMockFile = await promises.writeFile(filePath, 'test content');
+      const reqFile = {
+        name: 'test.txt',
+        type: 'text/plain',
+        size: 123,
+        path: filePath,
+      };
+
+      const result = fileService.create(reqFile, userId, String(fileMock._id));
+
+      expect(result).rejects.toMatchObject({
+        message: 'Directory not exist',
+        status: 404,
+      });
+    });
+
+    it('should throw an error when create a new file with invalid id', async () => {
+      const filePath = path.resolve(
+        __dirname,
+        '..',
+        '..',
+        'src',
+        'storage',
+        'test1.txt',
+      );
+      const newMockFile = await promises.writeFile(filePath, 'test content');
+      const reqFile = {
+        name: 'test1.txt',
+        type: 'text/plain',
+        size: 123,
+        path: filePath,
+      };
+
+      const result = fileService.create(reqFile, userId, 'invalid-id');
+
+      expect(result).rejects.toMatchObject({
+        message: 'Directory id is not valid',
+        status: 400,
+      });
+    });
+
+    it('should throw an error when create a new file with non-existent parent file', async () => {
+      const filePath = path.resolve(
+        __dirname,
+        '..',
+        '..',
+        'src',
+        'storage',
+        'test2.txt',
+      );
+      const newMockFile = await promises.writeFile(filePath, 'test content');
+      const reqFile = {
+        name: 'test2.txt',
+        type: 'text/plain',
+        size: 123,
+        path: filePath,
+      };
+
+      const result = fileService.create(
+        reqFile,
+        userId,
+        String(new Types.ObjectId(4294967295)),
+      );
+
+      expect(result).rejects.toMatchObject({
+        message: 'Directory not exist',
+        status: 404,
+      });
+    });
+
+    it('should throw an error when create a new file with wrong user id and with valid and existing parent id', async () => {
+      const filePath = path.resolve(
+        __dirname,
+        '..',
+        '..',
+        'src',
+        'storage',
+        'test3.txt',
+      );
+      const newMockFile = await promises.writeFile(filePath, 'test content');
+      const reqFile = {
+        name: 'test3.txt',
+        type: 'text/plain',
+        size: 123,
+        path: filePath,
+      };
+
+      jest.spyOn(fileRepository, 'getOne').mockResolvedValueOnce(mockDirectory);
+
+      try {
+        const result = await fileService.create(
+          reqFile,
+          new Types.ObjectId(),
+          String(mockDirectory._id),
+        );
+      } catch (error) {
+        console.log('error creating file', error);
+        expect(error).toBeInstanceOf(HttpError);
+        expect(error).toMatchObject({
+          message: 'User not have permission to access this file',
+          status: 403,
+        });
+      }
+    });
+  });
+
+  describe('createDirectory', () => {
+    it('should create a directory in root (null parent)', async () => {
+      const directoryName = 'My Folder';
+      const directory = await fileService.createDirectory(
+        directoryName,
+        userId,
+      );
+
+      expect(directory).toBeDefined();
+      expect(directory).toEqual<IFile>({
+        _id: expect.any(Types.ObjectId),
+        name: directoryName,
+        size: 0,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        type: 'directory',
+        userId: userId,
+        parent: null,
+        childs: [],
+        link: undefined,
+        storageId: undefined,
+      });
+    });
+
+    it('should create a subdirectory', async () => {
+      const subdirectoryName = 'Subdirectory';
+      jest.spyOn(fileRepository, 'getOne').mockResolvedValueOnce(mockDirectory);
+      const subdirectory = await fileService.createDirectory(
+        subdirectoryName,
+        userId,
+        mockDirectory._id.toString(),
+      );
+
+      expect(subdirectory).toBeDefined();
+      expect(subdirectory).toEqual<IFile>({
+        _id: expect.any(Types.ObjectId),
+        name: subdirectoryName,
+        size: 0,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        type: 'directory',
+        userId: userId,
+        parent: mockDirectory._id,
+        childs: [],
+        link: undefined,
+        storageId: undefined,
+      });
+    });
+
+    it('should throw an error when parent id is not valid', async () => {
+      const subdirectoryName = 'Subdirectory';
+      const subdirectory = fileService.createDirectory(
+        subdirectoryName,
+        userId,
+        'notvalid',
+      );
+
+      expect(subdirectory).rejects.toMatchObject({
+        message: 'Directory id is not valid',
+        status: 400,
       });
     });
   });
