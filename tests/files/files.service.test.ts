@@ -16,6 +16,7 @@ import { Sort } from '../../src/files/types/files.sort';
 import { HttpError } from '../../src/utils/Error';
 import { promises } from 'node:fs';
 import path from 'node:path';
+import { deleteResultMock } from '../users/mock/user.mock';
 
 describe('FileService', () => {
   let fileRepository: IFileRepository<IFile>;
@@ -462,7 +463,6 @@ describe('FileService', () => {
           String(mockDirectory._id),
         );
       } catch (error) {
-        console.log('error creating file', error);
         expect(error).toBeInstanceOf(HttpError);
         expect(error).toMatchObject({
           message: 'User not have permission to access this file',
@@ -532,6 +532,152 @@ describe('FileService', () => {
       expect(subdirectory).rejects.toMatchObject({
         message: 'Directory id is not valid',
         status: 400,
+      });
+    });
+  });
+
+  describe('update', () => {
+    it('should update name and parent', async () => {
+      jest
+        .spyOn(fileRepository, 'getOne')
+        .mockResolvedValueOnce(fileMock)
+        .mockResolvedValue(mockDirectory);
+      const updatedFile = await fileService.update(
+        String(fileMock._id),
+        userId,
+        'new name',
+        String(mockDirectory._id),
+      );
+
+      expect(updatedFile).toBeDefined();
+      expect(updatedFile).toEqual<IFile>({
+        _id: expect.any(Types.ObjectId),
+        name: 'new name' + '.' + fileMock.type,
+        size: fileMock.size,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        type: fileMock.type,
+        userId: fileMock.userId,
+        parent: mockDirectory._id,
+        childs: fileMock.childs,
+        link: fileMock.link,
+        storageId: fileMock.storageId,
+      });
+    });
+
+    it('should update name only', async () => {
+      const updatedFile = await fileService.update(
+        String(fileMock._id),
+        userId,
+        'new name',
+      );
+
+      expect(updatedFile).toBeDefined();
+      expect(updatedFile).toEqual<IFile>({
+        _id: expect.any(Types.ObjectId),
+        name: 'new name' + '.' + fileMock.type,
+        size: fileMock.size,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        type: fileMock.type,
+        userId: fileMock.userId,
+        parent: fileMock.parent,
+        childs: fileMock.childs,
+        link: fileMock.link,
+        storageId: fileMock.storageId,
+      });
+    });
+
+    it('should update parent only', async () => {
+      jest
+        .spyOn(fileRepository, 'getOne')
+        .mockResolvedValueOnce(fileMock)
+        .mockResolvedValue(mockDirectory);
+      const updatedFile = await fileService.update(
+        String(fileMock._id),
+        userId,
+        undefined,
+        String(mockDirectory._id),
+      );
+
+      expect(updatedFile).toBeDefined();
+      expect(updatedFile).toEqual<IFile>({
+        _id: expect.any(Types.ObjectId),
+        name: fileMock.name,
+        size: fileMock.size,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        type: fileMock.type,
+        userId: fileMock.userId,
+        parent: mockDirectory._id,
+        childs: fileMock.childs,
+        link: fileMock.link,
+        storageId: fileMock.storageId,
+      });
+    });
+  });
+
+  describe('delete', () => {
+    it('deletes a file with no childs and no parent', async () => {
+      expect(fileService.delete(String(fileMock._id), userId)).resolves.toEqual(
+        deleteResultMock,
+      );
+    });
+
+    it('throws an error if file id is not valid', async () => {
+      const invalidId = 'invalid-id';
+
+      expect(fileService.delete(invalidId, userId)).rejects.toThrowError(
+        HttpError,
+      );
+      expect(fileService.delete(invalidId, userId)).rejects.toMatchObject({
+        message: 'File id is not valid',
+        status: 400,
+      });
+    });
+  });
+
+  describe('getParentFile', () => {
+    it('should return the file parent if everything is correct', async () => {
+      jest.spyOn(fileRepository, 'getOne').mockResolvedValueOnce(mockDirectory);
+
+      const result = await fileService.getParentFile(
+        String(mockDirectory._id),
+        userId,
+      );
+
+      expect(result).toEqual(mockDirectory);
+    });
+
+    it('should throw an error if the user does not have permission to access the file', async () => {
+      jest.spyOn(fileRepository, 'getOne').mockResolvedValueOnce(mockDirectory);
+
+      expect(
+        fileService.getParentFile(
+          String(mockDirectory._id),
+          new Types.ObjectId(),
+        ),
+      ).rejects.toMatchObject({
+        message: 'User not have permission to access this file',
+        status: 403,
+      });
+    });
+
+    it('should throw an error if the file type is not a directory', async () => {
+      expect(
+        fileService.getParentFile(String(fileMock._id), userId),
+      ).rejects.toMatchObject({
+        message: 'Directory not exist',
+        status: 404,
+      });
+    });
+
+    it('should throw an error if the file is not exist', async () => {
+      expect(
+        fileService.getParentFile(String(new Types.ObjectId()), userId),
+      ).rejects.toMatchObject({
+        message: 'Directory not exist',
+        status: 404,
       });
     });
   });

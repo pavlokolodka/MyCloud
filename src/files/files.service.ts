@@ -24,7 +24,7 @@ class FileService {
 
   async getAll(userId: Types.ObjectId, parent?: string, sort?: Sort) {
     if (parent) {
-      const parentDirectory = await this.getFileParent(parent, userId);
+      const parentDirectory = await this.getParentFile(parent, userId);
     }
 
     const files = await this.fileRepository.getAll(
@@ -108,7 +108,7 @@ class FileService {
       return file;
     }
 
-    const fileParent = await this.getFileParent(parent, userId);
+    const fileParent = await this.getParentFile(parent, userId);
 
     const file = await this.fileRepository.create({
       name: reqFile.name,
@@ -141,7 +141,7 @@ class FileService {
       return directory;
     }
 
-    const parentDirectory = await this.getFileParent(parent, userId);
+    const parentDirectory = await this.getParentFile(parent, userId);
 
     const directory = await this.fileRepository.create({
       name,
@@ -160,17 +160,17 @@ class FileService {
   async update(
     fileId: string,
     userId: Types.ObjectId,
-    name: string,
+    name?: string,
     parentId?: string,
   ) {
     const file = await this.getOne(fileId, userId);
 
     if (name && parentId) {
-      const newParentDirectory = await this.getFileParent(parentId, userId);
+      const newParentDirectory = await this.getParentFile(parentId, userId);
 
       // delete all the files from old parent directory
       if (file.parent) {
-        const parentDirectory = await this.getFileParent(
+        const parentDirectory = await this.getParentFile(
           String(file.parent),
           userId,
         );
@@ -215,11 +215,11 @@ class FileService {
     }
 
     if (parentId) {
-      const newParentDirectory = await this.getFileParent(parentId, userId);
+      const newParentDirectory = await this.getParentFile(parentId, userId);
 
       // delete all the files from old parent directory
       if (file.parent) {
-        const parentDirectory = await this.getFileParent(
+        const parentDirectory = await this.getParentFile(
           String(file.parent),
           userId,
         );
@@ -262,9 +262,9 @@ class FileService {
     file.childs?.length
       ? Promise.all([
           this.deleteChilds(file, userId),
-          this.deleteParent(file, userId),
+          this.deleteFileFromParent(file._id, file.parent, userId),
         ])
-      : await this.deleteParent(file, userId);
+      : await this.deleteFileFromParent(file._id, file.parent, userId);
 
     const deletedFile = await this.fileRepository.delete({
       _id: id,
@@ -274,7 +274,7 @@ class FileService {
     return deletedFile;
   }
 
-  async getFileParent(parentId: string, userId: Types.ObjectId) {
+  async getParentFile(parentId: string, userId: Types.ObjectId) {
     const isValidId = isValidObjectId(parentId);
 
     if (!isValidId) throw new HttpError('Directory id is not valid', 400);
@@ -295,23 +295,30 @@ class FileService {
   }
 
   private async deleteChilds(file: IFile, userId: Types.ObjectId) {
-    file.childs?.forEach(async (file) => {
+    file.childs?.forEach(async (fileId) => {
       const isParent = await this.fileRepository.getOneWithUser(
-        { _id: file },
+        { _id: fileId },
         userId,
       );
 
       if (isParent?.childs?.length) await this.deleteChilds(isParent, userId);
 
-      await this.fileRepository.delete({ _id: file });
+      await this.fileRepository.delete({ _id: fileId });
     });
   }
 
-  private async deleteParent(file: IFile, userId: Types.ObjectId) {
-    await this.fileRepository.deleteParent(
-      { _id: file.parent, userId: userId },
-      { $pull: { childs: file._id } },
-    );
+  private async deleteFileFromParent(
+    fileId: Types.ObjectId,
+    parentId: Types.ObjectId | null,
+    userId: Types.ObjectId,
+  ) {
+    if (parentId) {
+      await this.fileRepository.deleteFileFromParent({
+        fileId,
+        parentId,
+        userId,
+      });
+    }
   }
 
   private async checkLinkExp(files: IFile[]) {

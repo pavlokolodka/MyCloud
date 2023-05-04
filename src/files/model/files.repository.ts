@@ -5,6 +5,7 @@ import { File } from './files.model';
 import { CreateFileDto } from '../dto/create-file.dto';
 import { UpdateFileDto } from '../dto/update-file.dto';
 import { Sort } from '../types/files.sort';
+import { DeleteFromParentDto } from '../dto/delete-parent.dto';
 
 export class FileRepository implements IFileRepository<IFile> {
   constructor(private database = File) {}
@@ -57,8 +58,11 @@ export class FileRepository implements IFileRepository<IFile> {
     return await this.database.deleteOne(query);
   }
 
-  public async deleteParent(query: object, action: object) {
-    return await this.database.updateOne(query, action);
+  public async deleteFileFromParent(query: DeleteFromParentDto) {
+    return await this.database.updateOne(
+      { _id: query.parentId, userId: query.userId },
+      { $pull: { childs: query.fileId } },
+    );
   }
 
   public async addChilds(

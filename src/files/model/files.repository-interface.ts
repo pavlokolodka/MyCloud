@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { CreateFileDto } from '../dto/create-file.dto';
 import { UpdateFileDto } from '../dto/update-file.dto';
 import { Sort } from '../types/files.sort';
+import { DeleteFromParentDto } from '../dto/delete-parent.dto';
 
 export interface IFileRepository<T> {
   create: (query: CreateFileDto) => Promise<T>;
@@ -14,7 +15,7 @@ export interface IFileRepository<T> {
   ) => Promise<T | null>;
   update: (query: UpdateFileDto) => Promise<UpdateResult>;
   delete: (query: object) => Promise<DeleteResult>;
-  deleteParent: (query: object, action: object) => Promise<UpdateResult>;
+  deleteFileFromParent: (query: DeleteFromParentDto) => Promise<UpdateResult>;
   addChilds: (
     parentId: mongoose.Types.ObjectId,
     childIds: mongoose.Types.ObjectId[],

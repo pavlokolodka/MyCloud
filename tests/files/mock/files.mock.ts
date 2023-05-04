@@ -7,7 +7,7 @@ import {
 
 export const fileMock: IFile = {
   _id: new Types.ObjectId('50958c9f0000000000000000'),
-  name: 'TestFile name',
+  name: 'TestFile name.png',
   size: 50,
   createdAt: new Date(),
   updatedAt: new Date(),

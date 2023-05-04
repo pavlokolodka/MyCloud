@@ -105,7 +105,7 @@ export interface ICreateDirectoryBody {
  *         - name
  */
 export interface IUpdateFileBody {
-  name: string;
+  name?: string;
   parent?: string;
 }
 

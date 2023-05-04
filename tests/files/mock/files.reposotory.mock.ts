@@ -6,6 +6,7 @@ import { fileMock, filesMock } from './files.mock';
 import { deleteResultMock, updateResultMock } from '../../users/mock/user.mock';
 import { UpdateFileDto } from '../../../src/files/dto/update-file.dto';
 import { Sort } from '../../../src/files/types/files.sort';
+import { DeleteFromParentDto } from '../../../src/files/dto/delete-parent.dto';
 
 export default class MockFileRepository implements IFileRepository<IFile> {
   public addChilds(parentId: Types.ObjectId, childIds: Types.ObjectId[]) {
@@ -64,7 +65,7 @@ export default class MockFileRepository implements IFileRepository<IFile> {
     return Promise.resolve(deleteResultMock);
   }
 
-  public deleteParent(query: object, action: object) {
+  public deleteFileFromParent(query: DeleteFromParentDto) {
     return Promise.resolve(updateResultMock);
   }
 }
