@@ -1,87 +1,92 @@
-import mongoose from 'mongoose';
-import { HttpError } from '../../utils/Error';
+import mongoose, { Types } from 'mongoose';
 import { IFileRepository } from './files.repository-interface';
 import { IFile } from './files.interface';
 import { File } from './files.model';
 import { CreateFileDto } from '../dto/create-file.dto';
+import { UpdateFileDto } from '../dto/update-file.dto';
+import { Sort } from '../types/files.sort';
+import { DeleteFromParentDto } from '../dto/delete-parent.dto';
 
 export class FileRepository implements IFileRepository<IFile> {
   constructor(private database = File) {}
 
   public async create(query: CreateFileDto) {
-    try {
-      return await this.database.create(query);
-    } catch (e) {
-      throw new HttpError('creation error', 500);
-    }
+    return await this.database.create(query);
   }
 
-  public async getAll(query: object = {}, sortBy: string) {
-    try {
-      let files;
-      switch (sortBy) {
-        case 'name':
-          files = await this.database.find(query).sort({ name: 1 });
-          break;
-        case 'type':
-          files = await this.database.find(query).sort({ type: 1 });
-          break;
-        case 'date':
-          files = await this.database.find(query).sort({ date: 1 });
-          break;
-        default:
-          files = await this.database.find(query);
-          break;
-      }
-      return files;
-    } catch (e) {
-      throw new HttpError('can not get files', 500);
+  public async getAll(query: object = {}, sortBy?: Sort) {
+    let files;
+    switch (sortBy) {
+      case 'name':
+        files = await this.database.find(query).sort({ name: 1 });
+        break;
+      case 'type':
+        files = await this.database.find(query).sort({ type: 1 });
+        break;
+      case 'date':
+        files = await this.database.find(query).sort({ createdAt: 1 });
+        break;
+      default:
+        files = await this.database.find(query);
+        break;
     }
+    return files;
   }
 
-  public async getOne(query: object) {
-    try {
-      const file = await this.database.findOne(query);
+  public async getOne(id: Types.ObjectId) {
+    const file = await this.database.findOne({ _id: id });
 
-      return file;
-    } catch (e) {
-      throw new HttpError('can not get file', 500);
-    }
+    return file;
   }
 
   public async getOneWithUser(query: object, userId: mongoose.Types.ObjectId) {
-    try {
-      const file = await this.database
-        .findOne(query)
-        .where('userId')
-        .equals(userId);
-      return file;
-    } catch (e) {
-      throw new HttpError('can not get file', 500);
-    }
+    const file = await this.database
+      .findOne(query)
+      .where('userId')
+      .equals(userId);
+
+    return file;
   }
 
-  public async update(query: IFile) {
-    try {
-      return await this.database.updateOne(query);
-    } catch (e) {
-      throw new HttpError('update error', 500);
-    }
+  public async update(query: UpdateFileDto) {
+    const { fileId, ...data } = query;
+    console.log('data', data);
+    return await this.database.updateOne({ _id: fileId }, data);
   }
 
   public async delete(query: object) {
-    try {
-      return await this.database.deleteOne(query);
-    } catch (e) {
-      throw new HttpError('deletion error', 500);
-    }
+    return await this.database.deleteOne(query);
   }
 
-  public async deleteParent(query: object, action: object) {
-    try {
-      return await this.database.updateOne(query, action);
-    } catch (e) {
-      throw new HttpError('update error', 500);
-    }
+  public async deleteFileFromParent(query: DeleteFromParentDto) {
+    return await this.database.updateOne(
+      { _id: query.parentId, userId: query.userId },
+      { $pull: { childs: query.fileId } },
+    );
+  }
+
+  public async addChilds(
+    parentId: mongoose.Types.ObjectId,
+    childIds: mongoose.Types.ObjectId[],
+  ) {
+    return this.database.updateOne(
+      { _id: parentId },
+      { $push: { childs: { $each: childIds } } },
+    );
+  }
+
+  public async saveNewChilds(
+    parentId: mongoose.Types.ObjectId,
+    childIds: mongoose.Types.ObjectId[] | undefined,
+  ) {
+    return this.database.updateOne({ _id: parentId }, { childs: childIds });
+  }
+
+  public async saveFileLink(fileId: mongoose.Types.ObjectId, newLink: string) {
+    const nowDate = new Date();
+    return this.database.updateOne(
+      { _id: fileId },
+      { link: newLink, updatedAt: nowDate },
+    );
   }
 }

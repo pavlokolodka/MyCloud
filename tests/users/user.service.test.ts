@@ -17,7 +17,7 @@ describe('UserService', () => {
     updatedAt: expect.any(Date),
   };
 
-  beforeEach(() => {
+  beforeAll(() => {
     mockUserRepository = new MockUserRepository();
     userService = new UserService(mockUserRepository);
   });
