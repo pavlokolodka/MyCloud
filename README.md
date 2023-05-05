@@ -25,22 +25,29 @@ cp .env.example .env
 ```bash
 npm install
 ```
-4. Start the MyCloud server. There are two available scripts depending on the mode you want to run:
-<br/>
+4. Start the MyCloud server. There are two available scripts depending on the mode you want to run:<br/>
 - For production mode:
 ```bash
 npm run build
 npm run start
 ```
-- For development mode (with nodemon for auto-reloading):
+- For development mode (with nodemon for auto-reloading):<br/>
 ```bash
 npm run dev
 ```
-## API Documentation
+
+## Documentation
+
+### System documentation:
+
+> [System documentation](./github/README.md)
+
+### API Documentation:
 
 MyCloud provides a RESTful API for file management and user authentication. Detailed documentation of the API endpoints and usage can be found in
 
-[localhost:5000/api](http://localhost:5000/api)
+> [localhost:5000/api](http://localhost:5000/api)
+
 
 
 ## Technologies Used
@@ -51,6 +58,9 @@ MyCloud provides a RESTful API for file management and user authentication. Deta
 - JWT (JSON Web Token): A widely used authentication and authorization mechanism for securing web applications, providing a stateless and secure way of transmitting user authentication data between client and server.
 - TypeScript: A superset of JavaScript that provides static typing, better tooling, and enhanced scalability for larger applications, ensuring code quality and robustness.
 - OpenAPI: A specification for describing RESTful APIs using a standard language- and framework-agnostic format, allowing for better documentation, testing, and client code generation.
+
+## TODO
+> [MyCloud todo board](https://www.notion.so/MyCloud-TODO-1e488a58e519480dac618b4822be129a)
 
 ## Contributing
 
