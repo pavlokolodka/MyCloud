@@ -51,7 +51,7 @@ import { IFile } from './files.interface';
 const fileSchema = new Schema<IFile>({
   name: {
     type: String,
-    require: true,
+    required: true,
   },
   storageId: {
     type: String,
@@ -61,16 +61,16 @@ const fileSchema = new Schema<IFile>({
   },
   size: {
     type: Number,
-    require: true,
+    required: true,
   },
   type: {
     type: String,
-    require: true,
+    required: true,
   },
   userId: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    require: true,
+    required: true,
   },
   parent: {
     type: Schema.Types.ObjectId,
