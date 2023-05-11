@@ -35,7 +35,27 @@ npm run start
 ```bash
 npm run dev
 ```
+Alternative way using Docker: 
 
+1. Clone the MyCloud repository to your local machine using Git:
+
+```bash
+git clone https://github.com/pavlokolodka/MyCloud.git
+```
+
+2. Create a .env file by making a copy of .env.example. This file will contain the configuration for your environment variables:
+```bash
+cp .env.example .env
+```
+
+3. Build the Docker image using the Dockerfile. This will create a Docker image named `mycloud`
+```bash
+docker build . -t mycloud
+```
+4. Run the Docker container as a daemon using the newly created image.
+```bash
+docker run -p 5000:5000 -d mycloud
+```
 ## Documentation
 
 ### System documentation:
@@ -44,7 +64,8 @@ npm run dev
 
 ### API Documentation:
 
-MyCloud provides a RESTful API for file management and user authentication. Detailed documentation of the API endpoints and usage can be found in
+MyCloud provides a RESTful API with OpenAPI documentation, allowing developers to easily understand and utilize its functionality. <br/>
+Detailed documentation of the API endpoints and usage can be found in
 
 > [localhost:5000/api](http://localhost:5000/api)
 
