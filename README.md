@@ -60,11 +60,14 @@ docker run -p 5000:5000 -d mycloud
 
 ### System documentation:
 
+System documentation is an essential component of any software project. It helps developers and stakeholders to understand the system's architecture, design, and operation.
+You can view the UML component and deployment diagrams by clicking on the link.
+
 > [System documentation](./github/README.md)
 
 ### API Documentation:
 
-MyCloud provides a RESTful API with OpenAPI documentation, allowing developers to easily understand and utilize its functionality. <br/>
+MyCloud provides a RESTful API with OpenAPI documentation, allowing developers to easily understand and utilize its functionality.
 Detailed documentation of the API endpoints and usage can be found in
 
 > [localhost:5000/api](http://localhost:5000/api)
