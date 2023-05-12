@@ -1,3 +1,15 @@
 # Add 'test' label to any change of test directory:
 test:
-- test/**/*.*.ts
+- test/**
+
+# Add 'file' label to any change of files directory:
+file:
+- src/files/**
+
+# Add 'auth' label to any change of auth directory:
+auth:
+- src/auth/**
+
+# Add 'user' label to any change of users directory:
+user:
+- src/users/**
