@@ -9,6 +9,10 @@ jobs:
       - checkout
       - node/install-packages:
           pkg-manager: npm
+          node-version: '18'
+      - run:
+        command: node --version
+        name: Check node version
       - run:
           command: npm run test:unit
           name: Run unit tests
