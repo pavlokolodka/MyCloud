@@ -1,0 +1,38 @@
+version: 2.1
+orbs:
+  node: circleci/node@5.1.0
+
+parameters:
+  build-code:
+    type: boolean
+    default: false
+
+jobs:
+  build_and_test:
+    executor:
+      name: node/default
+      tag: '18.16'
+    steps:
+      - checkout
+      - run: node --version
+      - node/install-packages:
+          pkg-manager: npm
+      - run:
+          command: npm run test:unit
+          name: Run unit tests
+      - run:
+          command: npm run build
+          name: Build server
+      - run:
+          command: npm run start
+          name: Start server
+          background: true
+      - run:
+          command: sleep 5 && curl -I localhost:5000
+          name: Verify server is running
+
+workflows:
+  build_and_test_app:
+    when: << pipeline.parameters.build-code >>
+    jobs:
+      - build_and_test
