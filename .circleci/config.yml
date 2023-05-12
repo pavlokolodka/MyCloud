@@ -17,7 +17,11 @@ jobs:
           name: Run unit tests
       - run:
           command: npm run build
-          name: Build app
+          name: Build server
+      - run:
+          command: npm run start
+          name: Start server
+          background: true
       - run:
           command: sleep 5 && curl -I localhost:5000
           name: Verify server is running
