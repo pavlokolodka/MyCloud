@@ -18,6 +18,9 @@ jobs:
       - run:
           command: npm run build
           name: Build app
+      - run:
+          command: sleep 5 && curl -I localhost:5000
+          name: Verify server is running
 
 workflows:
   build_and_test_app:
