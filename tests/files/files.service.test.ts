@@ -1,5 +1,8 @@
 import { Types } from 'mongoose';
 
+import { promises } from 'node:fs';
+import path from 'node:path';
+import fs from 'fs';
 import MockFileRepository from './mock/files.reposotory.mock';
 import FileService from '../../src/files/files.service';
 import { BotService } from '../../src/bot/bot.service';
@@ -14,8 +17,6 @@ import {
 } from './mock/files.mock';
 import { Sort } from '../../src/files/types/files.sort';
 import { HttpError } from '../../src/utils/Error';
-import { promises } from 'node:fs';
-import path from 'node:path';
 import { deleteResultMock } from '../users/mock/user.mock';
 
 describe('FileService', () => {
@@ -33,6 +34,14 @@ describe('FileService', () => {
     createdAt: new Date(),
     updatedAt: new Date(),
   };
+
+  beforeAll(() => {
+    const directoryPath = path.resolve(__dirname, '..', '..', 'src', 'storage');
+
+    if (!fs.existsSync(directoryPath)) {
+      fs.mkdirSync(directoryPath, { recursive: true });
+    }
+  });
 
   beforeEach(() => {
     fileRepository = new MockFileRepository();
@@ -211,6 +220,7 @@ describe('FileService', () => {
         'storage',
         'test.txt',
       );
+
       const newMockFile = await promises.writeFile(filePath, 'test content');
       const reqFile = {
         name: 'test.txt',
@@ -246,6 +256,7 @@ describe('FileService', () => {
         'storage',
         'sample.mp3',
       );
+
       const newMockFile = await promises.writeFile(filePath, 'test content');
       const reqFile = {
         name: 'sample.mp3',
@@ -281,6 +292,7 @@ describe('FileService', () => {
         'storage',
         'test.txt',
       );
+
       const newMockFile = await promises.writeFile(filePath, 'test content');
       const reqFile = {
         name: 'test.txt',
@@ -324,6 +336,7 @@ describe('FileService', () => {
         'storage',
         'sample.mp3',
       );
+
       const newMockFile = await promises.writeFile(filePath, 'test content');
       const reqFile = {
         name: 'sample.mp3',
@@ -367,6 +380,7 @@ describe('FileService', () => {
         'storage',
         'test.txt',
       );
+
       const newMockFile = await promises.writeFile(filePath, 'test content');
       const reqFile = {
         name: 'test.txt',
@@ -392,6 +406,7 @@ describe('FileService', () => {
         'storage',
         'test1.txt',
       );
+
       const newMockFile = await promises.writeFile(filePath, 'test content');
       const reqFile = {
         name: 'test1.txt',
@@ -417,6 +432,7 @@ describe('FileService', () => {
         'storage',
         'test2.txt',
       );
+
       const newMockFile = await promises.writeFile(filePath, 'test content');
       const reqFile = {
         name: 'test2.txt',
@@ -446,6 +462,7 @@ describe('FileService', () => {
         'storage',
         'test3.txt',
       );
+
       const newMockFile = await promises.writeFile(filePath, 'test content');
       const reqFile = {
         name: 'test3.txt',
