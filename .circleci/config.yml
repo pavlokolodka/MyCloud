@@ -1,0 +1,17 @@
+version: 2.1
+
+setup: true
+
+orbs:
+  path-filtering: circleci/path-filtering@0.1.5
+
+workflows:
+  setup-workflow:
+    jobs:
+      - path-filtering/filter:
+          name: Check updated files
+          base-revision: master
+          config-path: .circleci/build-and-test.yml
+          # for more parameters see https://circleci.com/developer/orbs/orb/circleci/path-filtering
+          mapping: src/.* build-code true
+            
