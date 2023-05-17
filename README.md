@@ -63,7 +63,7 @@ docker run -p 5000:5000 -d mycloud
 System documentation is an essential component of any software project. It helps developers and stakeholders to understand the system's architecture, design, and operation.
 You can view the UML component and deployment diagrams by clicking on the link.
 
-> [System documentation](./github/README.md)
+> [System documentation](./documentation/README.md)
 
 ### API Documentation:
 
