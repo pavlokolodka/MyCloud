@@ -3,15 +3,19 @@ import { validationResult } from 'express-validator';
 import { HttpError } from '../utils/Error';
 import { AuthService } from './auth.service';
 import {
+  emailValidation,
   isValidUser,
   loginValidation,
-  tokenValidation,
+  refreshTokenValidation,
+  verificationTokenValidation,
 } from '../middleware/validators/validator';
 import { UserService } from '../users/users.service';
 import {
+  IEmailTokenBody,
   ILoginBody,
   IRefreshTokensBody,
   IRegisterBody,
+  IVerificationTokenBody,
 } from '../middleware/validators/types';
 import { extractUserId } from '../middleware/auth';
 
@@ -138,6 +142,7 @@ export class AuthController {
             userName: candidate.name,
             userId: candidate._id,
             email,
+            isVerified: candidate.isVerified,
           });
 
           return res.send(singInUser);
@@ -313,7 +318,7 @@ export class AuthController {
     this.router.post(
       `${this.path}/refresh-tokens`,
       extractUserId,
-      tokenValidation,
+      refreshTokenValidation,
       async (req: Request, res: Response, next: NextFunction) => {
         try {
           const errors = validationResult(req);
@@ -326,6 +331,57 @@ export class AuthController {
           const refreshTokens = this.authService.refreshTokens(refreshToken);
 
           return res.send(refreshTokens);
+        } catch (e: unknown) {
+          next(e);
+        }
+      },
+    );
+
+    this.router.patch(
+      `${this.path}/verification/email`,
+      verificationTokenValidation,
+      async (req: Request, res: Response, next: NextFunction) => {
+        try {
+          const errors = validationResult(req);
+
+          if (!errors.isEmpty()) {
+            throw new HttpError(`${errors.array()[0].msg}`, 400);
+          }
+
+          const { token }: IVerificationTokenBody = req.body;
+          const result = await this.authService.verifyEmail(token);
+
+          return res.send(result);
+        } catch (e: unknown) {
+          next(e);
+        }
+      },
+    );
+
+    this.router.post(
+      `${this.path}/verification/resend/email`,
+      emailValidation,
+      async (req: Request, res: Response, next: NextFunction) => {
+        try {
+          const errors = validationResult(req);
+
+          if (!errors.isEmpty()) {
+            throw new HttpError(`${errors.array()[0].msg}`, 400);
+          }
+
+          const { email }: IEmailTokenBody = req.body;
+          const candidate = await this.userService.getUserByEmail(email);
+
+          if (!candidate)
+            throw new HttpError(`User with email ${email} doesn't exist`, 404);
+
+          const result = await this.authService.resendEmail({
+            email: candidate.email,
+            name: candidate.name,
+            userId: candidate._id,
+          });
+
+          return res.send(result);
         } catch (e: unknown) {
           next(e);
         }

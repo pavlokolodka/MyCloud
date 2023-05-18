@@ -5,4 +5,5 @@ export interface ILoginDto {
   userName: string;
   userId: Types.ObjectId;
   email: string;
+  isVerified: boolean;
 }

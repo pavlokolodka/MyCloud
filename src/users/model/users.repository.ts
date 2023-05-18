@@ -30,4 +30,8 @@ export class UserRepository implements IUserRepository<IUser> {
   public async delete(query: object) {
     return await this.database.deleteOne(query);
   }
+
+  public async verify(id: string) {
+    return await this.database.updateOne({ _id: id, isVerified: true });
+  }
 }

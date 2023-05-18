@@ -43,6 +43,40 @@ export interface IRefreshTokensBody {
  * @swagger
  * components:
  *   schemas:
+ *     IVerificationTokenBody:
+ *       type: object
+ *       properties:
+ *         token:
+ *           type: string
+ *           description: The token used to verify a new created account with email.
+ *       required:
+ *         - token
+ */
+export interface IVerificationTokenBody {
+  token: string;
+}
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     IEmailTokenBody:
+ *       type: object
+ *       properties:
+ *         email:
+ *           type: string
+ *           description: The email used to resend a new activation mail.
+ *       required:
+ *         - email
+ */
+export interface IEmailTokenBody {
+  email: string;
+}
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
  *     IRegisterBody:
  *       type: object
  *       properties:

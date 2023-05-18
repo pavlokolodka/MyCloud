@@ -9,4 +9,5 @@ export interface IUserRepository<T> {
   getByEmail: (email: string) => Promise<T | null>;
   update: (id: string, payload: UpdateUserDto) => Promise<UpdateResult>;
   delete: (query: object) => Promise<DeleteResult>;
+  verify: (id: string) => Promise<UpdateResult>;
 }

@@ -23,4 +23,9 @@ export class UserService {
     const user = this.userRepository.create(payload);
     return user;
   }
+
+  public verifyUser(id: string) {
+    const user = this.userRepository.verify(id);
+    return user;
+  }
 }

@@ -25,7 +25,6 @@ export default class MailService implements IMailService {
   }
 
   configure() {
-    console.log(MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASSWORD);
     this.transporter = nodemailer.createTransport({
       host: MAIL_HOST,
       port: Number(MAIL_PORT),

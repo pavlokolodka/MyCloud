@@ -7,7 +7,7 @@ import { AuthService } from './auth.service';
 const AuthModule = new Map();
 const authServices = new Map();
 const userService = new Map();
-userService.set(UserService, UserRepository);
+userService.set(UserService, [UserRepository]);
 authServices.set(AuthService, [userService, MailService]);
 authServices.set(UserService, [UserRepository]);
 AuthModule.set(AuthController, [authServices]);
