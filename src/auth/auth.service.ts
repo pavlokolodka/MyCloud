@@ -5,9 +5,17 @@ import { HttpError } from '../utils/Error';
 import { refreshSecretKey, secretKey } from './constants';
 import { ILoginDto } from './dto/login.dto';
 import { IRegisterDto } from './dto/register.dto';
+import { IMailService } from '../notification-services/mail.interface';
+import { generateVerificationEmail } from '../assets/email-verification';
 
 export class AuthService {
-  constructor(private userService: UserService) {}
+  private userService: UserService;
+  private mailService: IMailService;
+
+  constructor(userService: UserService, mailService: IMailService) {
+    this.userService = userService;
+    this.mailService = mailService;
+  }
 
   public async login(payload: ILoginDto) {
     const isEqualPassword = await bcrypt.compare(
@@ -40,27 +48,39 @@ export class AuthService {
 
   public async register(payload: IRegisterDto) {
     const hashPassword = await bcrypt.hash(payload.password, 10);
-    const user = await this.userService.create({
-      name: payload.name,
-      email: payload.email,
-      password: hashPassword,
-    });
-    const token = jwt.sign({ id: user._id }, secretKey, {
-      expiresIn: '1d',
-    });
-    const refreshToken = jwt.sign({ id: user._id }, refreshSecretKey, {
-      expiresIn: '2d',
-    });
+
+    await this.mailService.sendMail(
+      payload.email,
+      'MyCloud email verification',
+      generateVerificationEmail(payload.email, payload.name, 1222),
+    );
 
     return {
-      accessToken: token,
-      refreshToken: refreshToken,
-      user: {
-        name: user.name,
-        email: user.email,
-        id: user._id,
-      },
+      success: true,
+      message:
+        'A link to activate your account has been emailed to the address provided',
     };
+    // const user = await this.userService.create({
+    //   name: payload.name,
+    //   email: payload.email,
+    //   password: hashPassword,
+    // });
+    // const token = jwt.sign({ id: user._id }, secretKey, {
+    //   expiresIn: '1d',
+    // });
+    // const refreshToken = jwt.sign({ id: user._id }, refreshSecretKey, {
+    //   expiresIn: '2d',
+    // });
+
+    // return {
+    //   accessToken: token,
+    //   refreshToken: refreshToken,
+    //   user: {
+    //     name: user.name,
+    //     email: user.email,
+    //     id: user._id,
+    //   },
+    // };
   }
 
   public refreshTokens(rawToken: string) {
