@@ -1,3 +1,5 @@
+const FRONTEND_BASE_URL = process.env.FRONTEND_BASE_URL;
+
 export function generateVerificationEmail(
   username: string,
   verificationToken: string,
@@ -48,35 +50,19 @@ export function generateVerificationEmail(
         <h1>Email Verification</h1>
         <p>Dear ${username},</p>
         <p>Thank you for registering with our service. To complete your registration, please click the following button:</p>
-        <button id="verifyButton" class="button">Verify Email</button>
+
+        <a class="button" href="${FRONTEND_BASE_URL}/verify?token=${verificationToken}">Verify Email</a>
+
+        <p>If the button above doesn't work, you can also manually copy and paste the following link into your web browser:</p>
+        <p><a class="fallback-link" href="${FRONTEND_BASE_URL}/verify?token=${verificationToken}">${FRONTEND_BASE_URL}/verify?token=${verificationToken}</a></p>
+        
         <p>If you did not sign up for our service, you can safely ignore this email.</p>
         <p>Thank you,</p>
         <p>MyCloud Team</p>
       </div>
     </body>
-
-    <script>
-      var xhr = new XMLHttpRequest();
-      xhr.open('PATCH', 'http://localhost:5000/verification/email', true);
-      xhr.setRequestHeader('Content-Type', 'application/json');
-    
-      // Handle the response
-      xhr.onload = function() {
-        if (xhr.status === 200) {
-          console.log('Email verified!');
-        } else {
-          console.log('Verification failed. Please try again.');
-        }
-      };
-    
-      var verifyButton = document.getElementById('verifyButton');
-      verifyButton.addEventListener('click', function() {
-        xhr.send(JSON.stringify({ token: '${verificationToken}' }));
-      });
-    </script>
-
   </html>
-`;
+  `;
 
   return html;
 }

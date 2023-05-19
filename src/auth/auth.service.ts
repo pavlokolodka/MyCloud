@@ -85,11 +85,18 @@ export class AuthService {
         throw new HttpError('Invalid verification token', 403);
       }
 
+      if (user.isVerified) {
+        return {
+          success: true,
+          isVerified: true,
+        };
+      }
+
       await this.userService.verifyUser(payload.id);
 
       return {
         success: true,
-        message: 'Your email has been successfully verified',
+        isVerified: false,
       };
     } catch (error) {
       throw new HttpError('Invalid verification token', 403);
