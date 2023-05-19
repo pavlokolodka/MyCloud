@@ -2,13 +2,13 @@
 
 MyCloud is a file server written in Node.js that provides file management capabilities with unlimited storage. 
 
-## Features
+## 🔥 Features
 
 - File CRUD: Upload, download, update, and delete files with ease. Files can be stored and managed using a simple and intuitive API. MyCloud implements file encryption using the AES-256-CBC algorithm to enhance data security.
 - User Authentication: Secure sign-in and sign-up functionality allows users to create and manage their own accounts, providing a personalized experience.
 - Unlimited Storage: MyCloud offers unlimited storage for managing files, allowing users to store and retrieve files without worrying about storage limitations.
 
-## Installation
+## 🚀 Installation
 
 To run MyCloud on your local machine, you'll need to have Git and Node.js installed. Follow the steps below:
 
@@ -56,7 +56,7 @@ docker build . -t mycloud
 ```bash
 docker run -p 5000:5000 -d mycloud
 ```
-## Documentation
+## 📚 Documentation
 
 ### System documentation:
 
@@ -72,6 +72,11 @@ Detailed documentation of the API endpoints and usage can be found in
 
 > [localhost:5000/api](http://localhost:5000/api)
 
+### Development:
+
+The detailed documentation for development can be found in the Mycloud Wiki.
+
+> [Mycloud Wiki](./documentation/MyCloudWiki.md)
 
 
 ## Technologies Used
@@ -83,13 +88,13 @@ Detailed documentation of the API endpoints and usage can be found in
 - TypeScript: A superset of JavaScript that provides static typing, better tooling, and enhanced scalability for larger applications, ensuring code quality and robustness.
 - OpenAPI: A specification for describing RESTful APIs using a standard language- and framework-agnostic format, allowing for better documentation, testing, and client code generation.
 
-## TODO
+## ✅ TODO
 > [MyCloud todo board](https://www.notion.so/MyCloud-TODO-1e488a58e519480dac618b4822be129a)
 
-## Contributing
+## 🤝 Contributing
 
 Contributions to MyCloud are welcome! If you have suggestions for new features, bug reports, or other contributions, please open an issue or submit a pull request.
 
-## License
+## 📜 License
 
 MyCloud is released under the [MIT License](LICENSE).

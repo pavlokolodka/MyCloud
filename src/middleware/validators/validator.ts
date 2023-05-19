@@ -18,11 +18,19 @@ export const loginValidation = [
     .trim(),
 ];
 
-export const tokenValidation = [
+export const refreshTokenValidation = [
   body(`refreshToken`)
     .isString()
     .notEmpty()
     .withMessage('Refresh token is not passed'),
+];
+
+export const verificationTokenValidation = [
+  body(`token`).isString().notEmpty().withMessage('Email token is not passed'),
+];
+
+export const emailValidation = [
+  body(`email`).isEmail().withMessage('Email is not valid'),
 ];
 
 export const directoryValidation = [

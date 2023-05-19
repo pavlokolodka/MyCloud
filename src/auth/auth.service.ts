@@ -5,11 +5,24 @@ import { HttpError } from '../utils/Error';
 import { refreshSecretKey, secretKey } from './constants';
 import { ILoginDto } from './dto/login.dto';
 import { IRegisterDto } from './dto/register.dto';
+import { IMailService } from '../notification-services/mail.interface';
+import { generateVerificationEmail } from '../assets/email-verification';
+import { IResendEmail } from './dto/resend-email.dto';
 
 export class AuthService {
-  constructor(private userService: UserService) {}
+  private userService: UserService;
+  private mailService: IMailService;
+
+  constructor(userService: UserService, mailService: IMailService) {
+    this.userService = userService;
+    this.mailService = mailService;
+  }
 
   public async login(payload: ILoginDto) {
+    if (!payload.isVerified) {
+      throw new HttpError('User account is not verified', 403);
+    }
+
     const isEqualPassword = await bcrypt.compare(
       payload.password,
       payload.userPassword,
@@ -45,21 +58,66 @@ export class AuthService {
       email: payload.email,
       password: hashPassword,
     });
-    const token = jwt.sign({ id: user._id }, secretKey, {
-      expiresIn: '1d',
-    });
-    const refreshToken = jwt.sign({ id: user._id }, refreshSecretKey, {
-      expiresIn: '2d',
+    const verificationToken = jwt.sign({ id: user._id }, secretKey, {
+      expiresIn: '30m',
     });
 
+    await this.mailService.sendMail(
+      payload.email,
+      'MyCloud email verification',
+      generateVerificationEmail(payload.name, verificationToken),
+    );
+
     return {
-      accessToken: token,
-      refreshToken: refreshToken,
-      user: {
-        name: user.name,
-        email: user.email,
-        id: user._id,
-      },
+      success: true,
+      message:
+        'A link to activate your account has been emailed to the address provided',
+    };
+  }
+
+  public async verifyEmail(token: string) {
+    try {
+      const payload = jwt.verify(token, secretKey) as unknown as jwt.JwtPayload;
+
+      const user = await this.userService.getUserById(payload.id);
+
+      if (!user) {
+        throw new HttpError('Invalid verification token', 403);
+      }
+
+      if (user.isVerified) {
+        return {
+          success: true,
+          isVerified: true,
+        };
+      }
+
+      await this.userService.verifyUser(payload.id);
+
+      return {
+        success: true,
+        isVerified: false,
+      };
+    } catch (error) {
+      throw new HttpError('Invalid verification token', 403);
+    }
+  }
+
+  public async resendEmail(payload: IResendEmail) {
+    const verificationToken = jwt.sign({ id: payload.userId }, secretKey, {
+      expiresIn: '30m',
+    });
+
+    await this.mailService.sendMail(
+      payload.email,
+      'MyCloud email verification',
+      generateVerificationEmail(payload.name, verificationToken),
+    );
+
+    return {
+      success: true,
+      message:
+        'A link to activate your account has been emailed to the address provided',
     };
   }
 

@@ -24,10 +24,14 @@ export class UserRepository implements IUserRepository<IUser> {
   }
 
   public async update(id: string, payload: UpdateUserDto) {
-    return await this.database.updateOne({ _id: id, payload });
+    return await this.database.updateOne({ _id: id }, payload);
   }
 
   public async delete(query: object) {
     return await this.database.deleteOne(query);
+  }
+
+  public async verify(id: string) {
+    return await this.database.updateOne({ _id: id }, { isVerified: true });
   }
 }
