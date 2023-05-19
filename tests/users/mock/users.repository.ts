@@ -12,6 +12,7 @@ export default class MockUserRepository implements IUserRepository<IUser> {
       name: query.name,
       email: query.email,
       password: query.password,
+      isVerified: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -34,6 +35,10 @@ export default class MockUserRepository implements IUserRepository<IUser> {
   }
 
   public async update(id: string, payload: UpdateUserDto) {
+    return updateResultMock;
+  }
+
+  public async verify(id: string) {
     return updateResultMock;
   }
 

@@ -7,6 +7,7 @@ export const userMock: IUser = {
   name: 'John Doe',
   email: 'johndoe@example.com',
   password: 'password',
+  isVerified: true,
   createdAt: new Date(),
   updatedAt: new Date(),
 };

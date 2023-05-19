@@ -50,7 +50,6 @@ export class FileRepository implements IFileRepository<IFile> {
 
   public async update(query: UpdateFileDto) {
     const { fileId, ...data } = query;
-    console.log('data', data);
     return await this.database.updateOne({ _id: fileId }, data);
   }
 

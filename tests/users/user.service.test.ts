@@ -13,6 +13,7 @@ describe('UserService', () => {
     name: expect.any(String),
     email: expect.any(String),
     password: expect.any(String),
+    isVerified: expect.any(Boolean),
     createdAt: expect.any(Date),
     updatedAt: expect.any(Date),
   };
