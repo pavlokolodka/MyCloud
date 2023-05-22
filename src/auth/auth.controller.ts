@@ -21,6 +21,7 @@ import {
   IVerificationTokenBody,
 } from '../middleware/validators/types';
 import { extractUserId } from '../middleware/auth';
+import { prepareValidationErrorMessage } from '../utils/validation-error';
 
 /**
  * @swagger
@@ -88,19 +89,8 @@ export class AuthController {
      *                 value:
      *                   status: 400
      *                   error: validation error
-     *       404:
-     *         description: User not found.
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/HttpError'
-     *             examples:
-     *               overrides:
-     *                 value:
-     *                   status: 404
-     *                   error: User with email ${email} doesn't exist
      *       422:
-     *         description: Incorrect user password.
+     *         description: Incorrect email address or user password.
      *         content:
      *           application/json:
      *             schema:
@@ -130,14 +120,17 @@ export class AuthController {
           const errors = validationResult(req);
 
           if (!errors.isEmpty()) {
-            throw new HttpError(`${errors.array()[0].msg}`, 400);
+            throw new HttpError(
+              prepareValidationErrorMessage(errors.array()),
+              400,
+            );
           }
 
           const { email, password }: ILoginBody = req.body;
           const candidate = await this.userService.getUserByEmail(email);
 
           if (!candidate)
-            throw new HttpError(`User with email ${email} doesn't exist`, 404);
+            throw new HttpError('Incorrect email or password', 422);
 
           const singInUser = await this.authService.login({
             password,
@@ -233,7 +226,10 @@ export class AuthController {
           const errors = validationResult(req);
 
           if (!errors.isEmpty()) {
-            throw new HttpError(`${errors.array()[0].msg}`, 400);
+            throw new HttpError(
+              prepareValidationErrorMessage(errors.array()),
+              400,
+            );
           }
 
           const { name, email, password }: IRegisterBody = req.body;
@@ -327,7 +323,10 @@ export class AuthController {
           const errors = validationResult(req);
 
           if (!errors.isEmpty()) {
-            throw new HttpError(`${errors.array()[0].msg}`, 400);
+            throw new HttpError(
+              prepareValidationErrorMessage(errors.array()),
+              400,
+            );
           }
 
           const { refreshToken }: IRefreshTokensBody = req.body;
@@ -409,7 +408,10 @@ export class AuthController {
           const errors = validationResult(req);
 
           if (!errors.isEmpty()) {
-            throw new HttpError(`${errors.array()[0].msg}`, 400);
+            throw new HttpError(
+              prepareValidationErrorMessage(errors.array()),
+              400,
+            );
           }
 
           const { token }: IVerificationTokenBody = req.body;
@@ -458,7 +460,7 @@ export class AuthController {
      *                   description: Operation indicator.
      *                 message:
      *                   type: string
-     *                   example: A link to activate your account has been emailed to the address provided
+     *                   example: If a matching account was found, a link was sent to confirm the email address
      *                   description: Message describing the status of the verification.
      *       400:
      *         description: Bad Request
@@ -471,17 +473,6 @@ export class AuthController {
      *                 value:
      *                   status: 400
      *                   error: validation error
-     *       404:
-     *         description: User not found.
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/HttpError'
-     *             examples:
-     *               overrides:
-     *                 value:
-     *                   status: 404
-     *                   error: User with email ${email} doesn't exist
      *       409:
      *         description: Account is already verified
      *         content:
@@ -513,14 +504,21 @@ export class AuthController {
           const errors = validationResult(req);
 
           if (!errors.isEmpty()) {
-            throw new HttpError(`${errors.array()[0].msg}`, 400);
+            throw new HttpError(
+              prepareValidationErrorMessage(errors.array()),
+              400,
+            );
           }
 
           const { email }: IEmailTokenBody = req.body;
           const candidate = await this.userService.getUserByEmail(email);
 
           if (!candidate) {
-            throw new HttpError(`User with email ${email} doesn't exist`, 404);
+            return {
+              success: true,
+              message:
+                'If a matching account was found, a link was sent to confirm the email address',
+            };
           }
 
           if (candidate.isVerified) {
@@ -548,14 +546,21 @@ export class AuthController {
           const errors = validationResult(req);
 
           if (!errors.isEmpty()) {
-            throw new HttpError(`${errors.array()[0].msg}`, 400);
+            throw new HttpError(
+              prepareValidationErrorMessage(errors.array()),
+              400,
+            );
           }
 
           const { email }: IPasswordRecoveryBody = req.body;
           const candidate = await this.userService.getUserByEmail(email);
 
           if (!candidate) {
-            throw new HttpError(`User with email ${email} doesn't exist`, 404);
+            return {
+              success: true,
+              message:
+                'If that email address is in our database, we will send you an email to reset your password',
+            };
           }
 
           const result = await this.authService.recoverPassword({
@@ -580,7 +585,10 @@ export class AuthController {
 
           if (!errors.isEmpty()) {
             console.log(errors.array());
-            throw new HttpError(`${errors.array()[0].msg}`, 400);
+            throw new HttpError(
+              prepareValidationErrorMessage(errors.array()),
+              400,
+            );
           }
 
           const { token, password }: IPasswordResetBody = req.body;

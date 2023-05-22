@@ -120,7 +120,7 @@ export class AuthService {
     return {
       success: true,
       message:
-        'A link to activate your account has been emailed to the address provided',
+        'If a matching account was found, a link was sent to confirm the email address',
     };
   }
 
@@ -172,6 +172,8 @@ export class AuthService {
           409,
         );
       }
+
+      await this.userService.updatePassword(String(user._id), user.password);
     } catch (error) {
       throw new HttpError('Invalid verification token', 403);
     }
