@@ -514,11 +514,11 @@ export class AuthController {
           const candidate = await this.userService.getUserByEmail(email);
 
           if (!candidate) {
-            return {
+            return res.send({
               success: true,
               message:
                 'If a matching account was found, a link was sent to confirm the email address',
-            };
+            });
           }
 
           if (candidate.isVerified) {
@@ -556,11 +556,11 @@ export class AuthController {
           const candidate = await this.userService.getUserByEmail(email);
 
           if (!candidate) {
-            return {
+            return res.send({
               success: true,
               message:
                 'If that email address is in our database, we will send you an email to reset your password',
-            };
+            });
           }
 
           const result = await this.authService.recoverPassword({
@@ -584,7 +584,6 @@ export class AuthController {
           const errors = validationResult(req);
 
           if (!errors.isEmpty()) {
-            console.log(errors.array());
             throw new HttpError(
               prepareValidationErrorMessage(errors.array()),
               400,

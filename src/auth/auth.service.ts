@@ -1,8 +1,6 @@
 import bcrypt from 'bcrypt';
-import * as jwt from 'jsonwebtoken';
 import { UserService } from '../users/users.service';
 import { HttpError } from '../utils/Error';
-import { refreshSecretKey, secretKey } from './constants';
 import { ILoginDto } from './dto/login.dto';
 import { IRegisterDto } from './dto/register.dto';
 import { IMailService } from '../notification-services/mail.interface';
@@ -11,6 +9,12 @@ import { IResendEmail } from './dto/resend-email.dto';
 import { IPasswordRecovery } from './dto/password-recovery.dto';
 import { IResetPassword } from './dto/reset-password.dto';
 import { generatePasswordRecovery } from '../assets/password-recovery';
+import {
+  generateJWTToken,
+  generateTokens,
+  verifyJWTToken,
+  verifyRefreshToken,
+} from '../utils/token';
 
 export class AuthService {
   private userService: UserService;
@@ -34,16 +38,11 @@ export class AuthService {
     if (!isEqualPassword)
       throw new HttpError('Incorrect email or password', 422);
 
-    const token = jwt.sign({ id: payload.userId }, secretKey, {
-      expiresIn: '1d',
-    });
-    const refreshToken = jwt.sign({ id: payload.userId }, refreshSecretKey, {
-      expiresIn: '2d',
-    });
+    const { accessToken, refreshToken } = await generateTokens(payload.userId);
 
     const user = {
-      accessToken: token,
-      refreshToken: refreshToken,
+      accessToken,
+      refreshToken,
       user: {
         name: payload.userName,
         id: payload.userId,
@@ -61,9 +60,7 @@ export class AuthService {
       email: payload.email,
       password: hashPassword,
     });
-    const verificationToken = jwt.sign({ id: user._id }, secretKey, {
-      expiresIn: '30m',
-    });
+    const verificationToken = (await generateJWTToken(user._id)) as string;
 
     await this.mailService.sendMail(
       payload.email,
@@ -79,37 +76,33 @@ export class AuthService {
   }
 
   public async verifyEmail(token: string) {
-    try {
-      const payload = jwt.verify(token, secretKey) as unknown as jwt.JwtPayload;
+    const payload = await verifyJWTToken(token);
 
-      const user = await this.userService.getUserById(payload.id);
+    const user = await this.userService.getUserById(payload.id);
 
-      if (!user) {
-        throw new HttpError('Invalid verification token', 403);
-      }
-
-      if (user.isVerified) {
-        return {
-          success: true,
-          isVerified: true,
-        };
-      }
-
-      await this.userService.verifyUser(payload.id);
-
-      return {
-        success: true,
-        isVerified: false,
-      };
-    } catch (error) {
+    if (!user) {
       throw new HttpError('Invalid verification token', 403);
     }
+
+    if (user.isVerified) {
+      return {
+        success: true,
+        isVerified: true,
+      };
+    }
+
+    await this.userService.verifyUser(payload.id);
+
+    return {
+      success: true,
+      isVerified: false,
+    };
   }
 
   public async resendEmail(payload: IResendEmail) {
-    const verificationToken = jwt.sign({ id: payload.userId }, secretKey, {
-      expiresIn: '30m',
-    });
+    const verificationToken = (await generateJWTToken(
+      payload.userId,
+    )) as string;
 
     await this.mailService.sendMail(
       payload.email,
@@ -124,21 +117,10 @@ export class AuthService {
     };
   }
 
-  public refreshTokens(rawToken: string) {
-    const userId = this.getPayloadFromToken(rawToken).id;
-
-    const token = jwt.sign({ id: userId }, secretKey, { expiresIn: '1d' });
-    const refreshToken = jwt.sign({ id: userId }, refreshSecretKey, {
-      expiresIn: '2d',
-    });
-
-    return { accessToken: token, refreshToken };
-  }
-
   public async recoverPassword(payload: IPasswordRecovery) {
-    const verificationToken = jwt.sign({ id: payload.userId }, secretKey, {
-      expiresIn: '30m',
-    });
+    const verificationToken = (await generateJWTToken(
+      payload.userId,
+    )) as string;
 
     await this.mailService.sendMail(
       payload.email,
@@ -154,41 +136,34 @@ export class AuthService {
   }
 
   public async resetPassword(payload: IResetPassword) {
-    try {
-      const tokenPayload = jwt.verify(
-        payload.token,
-        secretKey,
-      ) as unknown as jwt.JwtPayload;
+    const tokenPayload = await verifyJWTToken(payload.token);
 
-      const user = await this.userService.getUserById(tokenPayload.id);
-
-      if (!user) {
-        throw new HttpError('Invalid verification token', 403);
-      }
-
-      if (user.password === payload.newPassword) {
-        throw new HttpError(
-          'User password should be different from an old password',
-          409,
-        );
-      }
-
-      await this.userService.updatePassword(String(user._id), user.password);
-    } catch (error) {
+    const user = await this.userService.getUserById(tokenPayload.id);
+    console.log('user', user);
+    if (!user) {
       throw new HttpError('Invalid verification token', 403);
     }
+
+    const isEqualPasswords = await bcrypt.compare(
+      payload.newPassword,
+      user.password,
+    );
+
+    if (isEqualPasswords) {
+      throw new HttpError(
+        'User password should be different from an old password',
+        409,
+      );
+    }
+
+    await this.userService.updatePassword(String(user._id), user.password);
   }
 
-  public getPayloadFromToken(token: string) {
-    try {
-      const payload = jwt.verify(
-        token,
-        refreshSecretKey,
-      ) as unknown as jwt.JwtPayload;
+  public async refreshTokens(refreshJWTToken: string) {
+    const userId = (await verifyRefreshToken(refreshJWTToken)).id;
 
-      return payload;
-    } catch (error) {
-      throw new HttpError('Invalid JWT token', 401);
-    }
+    const { accessToken, refreshToken } = await generateTokens(userId);
+
+    return { accessToken, refreshToken };
   }
 }
