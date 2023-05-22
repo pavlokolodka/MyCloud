@@ -2,7 +2,7 @@ import { body } from 'express-validator';
 
 export const isValidUser = [
   body(`email`).isEmail().withMessage('Email is not valid'),
-  body('password', 'Password must be at least 6 characters')
+  body('password', 'Password must be at least 6 alphanumeric characters')
     .isLength({ min: 6, max: 20 })
     .isAlphanumeric()
     .trim(),
@@ -13,8 +13,9 @@ export const isValidUser = [
 
 export const loginValidation = [
   body(`email`).isEmail().withMessage('Email is not valid'),
-  body('password', 'Password must be at least 6 characters')
+  body('password', 'Password must be at least 6 alphanumeric characters')
     .isLength({ min: 6, max: 20 })
+    .isAlphanumeric()
     .trim(),
 ];
 
@@ -31,6 +32,25 @@ export const verificationTokenValidation = [
 
 export const emailValidation = [
   body(`email`).isEmail().withMessage('Email is not valid'),
+];
+
+export const passwordResetValidation = [
+  body('token').isString().notEmpty().withMessage('Token is required'),
+  body('password')
+    .isString()
+    .notEmpty()
+    .isAlphanumeric()
+    .isLength({ min: 6, max: 20 })
+    .withMessage('Password must be at least 6 alphanumeric characters'),
+  body('confirmPassword').custom((confirmPassword, { req }) => {
+    const password = req.body.password;
+
+    if (password !== confirmPassword) {
+      throw new Error('Passwords must match');
+    }
+
+    return true;
+  }),
 ];
 
 export const directoryValidation = [

@@ -8,6 +8,9 @@ import { IRegisterDto } from './dto/register.dto';
 import { IMailService } from '../notification-services/mail.interface';
 import { generateVerificationEmail } from '../assets/email-verification';
 import { IResendEmail } from './dto/resend-email.dto';
+import { IPasswordRecovery } from './dto/password-recovery.dto';
+import { IResetPassword } from './dto/reset-password.dto';
+import { generatePasswordRecovery } from '../assets/password-recovery';
 
 export class AuthService {
   private userService: UserService;
@@ -130,6 +133,48 @@ export class AuthService {
     });
 
     return { accessToken: token, refreshToken };
+  }
+
+  public async recoverPassword(payload: IPasswordRecovery) {
+    const verificationToken = jwt.sign({ id: payload.userId }, secretKey, {
+      expiresIn: '30m',
+    });
+
+    await this.mailService.sendMail(
+      payload.email,
+      'MyCloud password recovery',
+      generatePasswordRecovery(payload.userName, verificationToken),
+    );
+
+    return {
+      success: true,
+      message:
+        'If that email address is in our database, we will send you an email to reset your password',
+    };
+  }
+
+  public async resetPassword(payload: IResetPassword) {
+    try {
+      const tokenPayload = jwt.verify(
+        payload.token,
+        secretKey,
+      ) as unknown as jwt.JwtPayload;
+
+      const user = await this.userService.getUserById(tokenPayload.id);
+
+      if (!user) {
+        throw new HttpError('Invalid verification token', 403);
+      }
+
+      if (user.password === payload.newPassword) {
+        throw new HttpError(
+          'User password should be different from an old password',
+          409,
+        );
+      }
+    } catch (error) {
+      throw new HttpError('Invalid verification token', 403);
+    }
   }
 
   public getPayloadFromToken(token: string) {

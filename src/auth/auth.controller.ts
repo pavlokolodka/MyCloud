@@ -6,6 +6,7 @@ import {
   emailValidation,
   isValidUser,
   loginValidation,
+  passwordResetValidation,
   refreshTokenValidation,
   verificationTokenValidation,
 } from '../middleware/validators/validator';
@@ -13,6 +14,8 @@ import { UserService } from '../users/users.service';
 import {
   IEmailTokenBody,
   ILoginBody,
+  IPasswordRecoveryBody,
+  IPasswordResetBody,
   IRefreshTokensBody,
   IRegisterBody,
   IVerificationTokenBody,
@@ -531,6 +534,63 @@ export class AuthController {
           });
 
           return res.send(result);
+        } catch (e: unknown) {
+          next(e);
+        }
+      },
+    );
+
+    this.router.post(
+      `${this.path}/password-recovery`,
+      emailValidation,
+      async (req: Request, res: Response, next: NextFunction) => {
+        try {
+          const errors = validationResult(req);
+
+          if (!errors.isEmpty()) {
+            throw new HttpError(`${errors.array()[0].msg}`, 400);
+          }
+
+          const { email }: IPasswordRecoveryBody = req.body;
+          const candidate = await this.userService.getUserByEmail(email);
+
+          if (!candidate) {
+            throw new HttpError(`User with email ${email} doesn't exist`, 404);
+          }
+
+          const result = await this.authService.recoverPassword({
+            email,
+            userId: candidate._id,
+            userName: candidate.name,
+          });
+
+          return res.send(result);
+        } catch (e: unknown) {
+          next(e);
+        }
+      },
+    );
+
+    this.router.post(
+      `${this.path}/password-reset`,
+      passwordResetValidation,
+      async (req: Request, res: Response, next: NextFunction) => {
+        try {
+          const errors = validationResult(req);
+
+          if (!errors.isEmpty()) {
+            console.log(errors.array());
+            throw new HttpError(`${errors.array()[0].msg}`, 400);
+          }
+
+          const { token, password }: IPasswordResetBody = req.body;
+
+          await this.authService.resetPassword({
+            token: token,
+            newPassword: password,
+          });
+
+          return res.status(204);
         } catch (e: unknown) {
           next(e);
         }
