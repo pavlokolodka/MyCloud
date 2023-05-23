@@ -30,7 +30,7 @@ export class UserService {
   }
 
   public updatePassword(id: string, password: string) {
-    const user = this.userRepository.updatePassowrd(id, password);
+    const user = this.userRepository.updatePassoword(id, password);
     return user;
   }
 }

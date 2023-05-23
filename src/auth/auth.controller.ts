@@ -597,7 +597,7 @@ export class AuthController {
             newPassword: password,
           });
 
-          return res.status(204);
+          return res.status(204).send();
         } catch (e: unknown) {
           next(e);
         }

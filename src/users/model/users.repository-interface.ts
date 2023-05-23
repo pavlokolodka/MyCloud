@@ -10,5 +10,5 @@ export interface IUserRepository<T> {
   update: (id: string, payload: UpdateUserDto) => Promise<UpdateResult>;
   delete: (query: object) => Promise<DeleteResult>;
   verify: (id: string) => Promise<UpdateResult>;
-  updatePassowrd: (id: string, password: string) => Promise<UpdateResult>;
+  updatePassoword: (id: string, password: string) => Promise<UpdateResult>;
 }

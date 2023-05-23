@@ -15,6 +15,7 @@ import {
   verifyJWTToken,
   verifyRefreshToken,
 } from '../utils/token';
+import { generatePasswordRecoveryNotification } from '../assets/password-recovery.infrom';
 
 export class AuthService {
   private userService: UserService;
@@ -139,7 +140,7 @@ export class AuthService {
     const tokenPayload = await verifyJWTToken(payload.token);
 
     const user = await this.userService.getUserById(tokenPayload.id);
-    console.log('user', user);
+
     if (!user) {
       throw new HttpError('Invalid verification token', 403);
     }
@@ -149,6 +150,8 @@ export class AuthService {
       user.password,
     );
 
+    const hashedPassword = await bcrypt.hash(payload.newPassword, 10);
+
     if (isEqualPasswords) {
       throw new HttpError(
         'User password should be different from an old password',
@@ -156,7 +159,12 @@ export class AuthService {
       );
     }
 
-    await this.userService.updatePassword(String(user._id), user.password);
+    await this.userService.updatePassword(String(user._id), hashedPassword);
+    await this.mailService.sendMail(
+      user.email,
+      'MyCloud password change notification',
+      generatePasswordRecoveryNotification(user.name),
+    );
   }
 
   public async refreshTokens(refreshJWTToken: string) {
