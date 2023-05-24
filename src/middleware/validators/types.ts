@@ -77,6 +77,49 @@ export interface IEmailTokenBody {
  * @swagger
  * components:
  *   schemas:
+ *     IPasswordRecoveryBody:
+ *       type: object
+ *       properties:
+ *         email:
+ *           type: string
+ *           description: The email used to resend a new activation mail.
+ *       required:
+ *         - email
+ */
+export interface IPasswordRecoveryBody {
+  email: string;
+}
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     IPasswordResetBody:
+ *       type: object
+ *       properties:
+ *         password:
+ *           type: string
+ *           description: A new password.
+ *         confirmPassword:
+ *           type: string
+ *           description: Confirmed password.
+ *         token:
+ *           type: string
+ *           description: The token used to verify a user when resetting the password.
+ *       required:
+ *         - password
+ *         - token
+ */
+export interface IPasswordResetBody {
+  token: string;
+  password: string;
+  confirmPassword: string;
+}
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
  *     IRegisterBody:
  *       type: object
  *       properties:

@@ -19,6 +19,7 @@ import {
   IGetFilesParams,
   IUpdateFileBody,
 } from '../middleware/validators/types';
+import { prepareValidationErrorMessage } from '../utils/validation-error';
 
 /**
  * @swagger
@@ -396,7 +397,10 @@ class FileController {
           const errors = validationResult(req);
 
           if (!errors.isEmpty()) {
-            throw new HttpError(`${errors.array()[0].msg}`, 400);
+            throw new HttpError(
+              prepareValidationErrorMessage(errors.array()),
+              400,
+            );
           }
 
           const { name, parent }: ICreateDirectoryBody = req.body;
@@ -613,6 +617,15 @@ class FileController {
       updateFileValidation,
       async (req: Request, res: Response, next: NextFunction) => {
         try {
+          const errors = validationResult(req);
+
+          if (!errors.isEmpty()) {
+            throw new HttpError(
+              prepareValidationErrorMessage(errors.array()),
+              400,
+            );
+          }
+
           const { parent, name }: IUpdateFileBody = req.body;
           const fileId = req.params.id;
 

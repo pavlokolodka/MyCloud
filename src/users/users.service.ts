@@ -28,4 +28,9 @@ export class UserService {
     const user = this.userRepository.verify(id);
     return user;
   }
+
+  public updatePassword(id: string, password: string) {
+    const user = this.userRepository.updatePassoword(id, password);
+    return user;
+  }
 }

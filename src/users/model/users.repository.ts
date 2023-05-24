@@ -34,4 +34,8 @@ export class UserRepository implements IUserRepository<IUser> {
   public async verify(id: string) {
     return await this.database.updateOne({ _id: id }, { isVerified: true });
   }
+
+  public async updatePassoword(id: string, password: string) {
+    return await this.database.updateOne({ _id: id }, { password });
+  }
 }
