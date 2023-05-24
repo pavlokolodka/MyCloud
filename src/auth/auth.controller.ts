@@ -538,6 +538,57 @@ export class AuthController {
       },
     );
 
+    /**
+     * @swagger
+     * /auth/password-recovery:
+     *   post:
+     *     summary: Send email for password recovery.
+     *     tags: [Auth]
+     *     requestBody:
+     *       required: true
+     *       description: The request body for resending email type of IPasswordRecoveryBody.
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/IPasswordRecoveryBody'
+     *     responses:
+     *       200:
+     *         description: Indicates that the operation was successful.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 success:
+     *                   type: boolean
+     *                   description: Operation indicator.
+     *                 message:
+     *                   type: string
+     *                   example: If that email address is in our database, we will send you an email to reset your password
+     *                   description: Message describing the status of the verification.
+     *       400:
+     *         description: Bad Request
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
+     *             examples:
+     *               overrides:
+     *                 value:
+     *                   status: 400
+     *                   error: validation error
+     *       500:
+     *         description: Internal Server Error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
+     *             examples:
+     *               overrides:
+     *                 value:
+     *                   status: 500
+     *                   error: Internal server error
+     */
     this.router.post(
       `${this.path}/password-recovery`,
       emailValidation,
@@ -576,6 +627,67 @@ export class AuthController {
       },
     );
 
+    /**
+     * @swagger
+     * /auth/password-reset:
+     *   post:
+     *     summary: Change the password.
+     *     tags: [Auth]
+     *     requestBody:
+     *       required: true
+     *       description: The request body for resending email type of IPasswordResetBody.
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/IPasswordResetBody'
+     *     responses:
+     *       204:
+     *         description: The password change was successful.
+     *       400:
+     *         description: Bad Request
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
+     *             examples:
+     *               overrides:
+     *                 value:
+     *                   status: 400
+     *                   error: validation error
+     *       403:
+     *         description: Verification token is invalid
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
+     *             examples:
+     *               overrides:
+     *                 value:
+     *                   status: 403
+     *                   error: Invalid verification token
+     *       409:
+     *         description: The new password matches the existing password
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
+     *             examples:
+     *               overrides:
+     *                 value:
+     *                   status: 409
+     *                   error: User password should be different from an old password
+     *       500:
+     *         description: Internal Server Error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
+     *             examples:
+     *               overrides:
+     *                 value:
+     *                   status: 500
+     *                   error: Internal server error
+     */
     this.router.post(
       `${this.path}/password-reset`,
       passwordResetValidation,

@@ -41,6 +41,10 @@ class MockUserService {
   async verifyUser(id: string) {
     await null;
   }
+
+  async updatePassword(id: string, password: string) {
+    await null;
+  }
 }
 
 export default new MockUserService();

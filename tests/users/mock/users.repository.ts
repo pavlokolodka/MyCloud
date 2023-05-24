@@ -42,6 +42,10 @@ export default class MockUserRepository implements IUserRepository<IUser> {
     return updateResultMock;
   }
 
+  public async updatePassoword(id: string, password: string) {
+    return updateResultMock;
+  }
+
   public async delete(query: object) {
     return deleteResultMock;
   }

@@ -150,14 +150,14 @@ export class AuthService {
       user.password,
     );
 
-    const hashedPassword = await bcrypt.hash(payload.newPassword, 10);
-
     if (isEqualPasswords) {
       throw new HttpError(
         'User password should be different from an old password',
         409,
       );
     }
+
+    const hashedPassword = await bcrypt.hash(payload.newPassword, 10);
 
     await this.userService.updatePassword(String(user._id), hashedPassword);
     await this.mailService.sendMail(
