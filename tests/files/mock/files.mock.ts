@@ -13,7 +13,17 @@ export const fileMock: IFile = {
   updatedAt: new Date(),
   type: 'png',
   userId: new Types.ObjectId('64520c9ea01cb5187c1090cb'),
+  parent: new Types.ObjectId('643a7e929cc0fb9639f98d0c'),
+};
+export const mockDirectory = {
+  _id: new Types.ObjectId('643a7e929cc0fb9639f98d0c'),
+  name: 'directory name',
   parent: null,
+  userId: new Types.ObjectId('64520c9ea01cb5187c1090cb'),
+  size: 2048,
+  type: 'directory',
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };
 
 export const filesMock: IFile[] = [
