@@ -60,32 +60,33 @@ export class FileRepository implements IFileRepository<IFile> {
   public async deleteFileFromParent(query: DeleteFromParentDto) {
     return await this.database.updateOne(
       { _id: query.parentId, userId: query.userId },
-      { $pull: { childs: query.fileId } },
+      { $pull: { childs: query.fileId }, size: query.directorySize },
     );
   }
 
   public async addChilds(
     parentId: mongoose.Types.ObjectId,
+    directorySize: number,
     childIds: mongoose.Types.ObjectId[],
   ) {
     return this.database.updateOne(
       { _id: parentId },
-      { $push: { childs: { $each: childIds } } },
+      { $push: { childs: { $each: childIds } }, size: directorySize },
     );
   }
 
   public async saveNewChilds(
     parentId: mongoose.Types.ObjectId,
+    directorySize: number,
     childIds: mongoose.Types.ObjectId[] | undefined,
   ) {
-    return this.database.updateOne({ _id: parentId }, { childs: childIds });
+    return this.database.updateOne(
+      { _id: parentId },
+      { childs: childIds, size: directorySize },
+    );
   }
 
   public async saveFileLink(fileId: mongoose.Types.ObjectId, newLink: string) {
-    const nowDate = new Date();
-    return this.database.updateOne(
-      { _id: fileId },
-      { link: newLink, updatedAt: nowDate },
-    );
+    return this.database.updateOne({ _id: fileId }, { link: newLink });
   }
 }

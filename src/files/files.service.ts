@@ -109,7 +109,7 @@ class FileService {
     }
 
     const fileParent = await this.getParentFile(parent, userId);
-
+    const newDirecorySize = fileParent.size + reqFile.size;
     const file = await this.fileRepository.create({
       name: reqFile.name,
       storageId: fileId!,
@@ -121,7 +121,9 @@ class FileService {
       userId: userId,
     });
 
-    await this.fileRepository.addChilds(fileParent._id, [file._id]);
+    await this.fileRepository.addChilds(fileParent._id, newDirecorySize, [
+      file._id,
+    ]);
 
     return file;
   }
@@ -138,11 +140,11 @@ class FileService {
         size: 0,
         childs: [],
       });
+
       return directory;
     }
 
     const parentDirectory = await this.getParentFile(parent, userId);
-
     const directory = await this.fileRepository.create({
       name,
       type,
@@ -152,7 +154,11 @@ class FileService {
       childs: [],
     });
 
-    await this.fileRepository.addChilds(parentDirectory._id, [directory._id]);
+    await this.fileRepository.addChilds(
+      parentDirectory._id,
+      parentDirectory.size,
+      [directory._id],
+    );
 
     return directory;
   }
@@ -165,6 +171,8 @@ class FileService {
   ) {
     const file = await this.getOne(fileId, userId);
 
+    this.checkNewParentDirectory(file.parent, parentId);
+
     if (name && parentId) {
       const newParentDirectory = await this.getParentFile(parentId, userId);
 
@@ -174,23 +182,26 @@ class FileService {
           String(file.parent),
           userId,
         );
-        let index = parentDirectory.childs?.indexOf(
+
+        const index = parentDirectory.childs?.indexOf(
           file._id,
         ) as unknown as number;
-        const array = parentDirectory.childs || [];
-
-        while (index !== -1) {
-          parentDirectory.childs?.splice(index, 1);
-          index = array.indexOf(file._id);
-        }
+        parentDirectory.childs?.splice(index, 1);
+        const newDirecorySize = parentDirectory.size - file.size;
 
         await this.fileRepository.saveNewChilds(
           parentDirectory._id,
+          newDirecorySize,
           parentDirectory.childs,
         );
       }
 
-      await this.fileRepository.addChilds(newParentDirectory._id, [file._id]);
+      const newDirecorySize = newParentDirectory.size + file.size;
+      await this.fileRepository.addChilds(
+        newParentDirectory._id,
+        newDirecorySize,
+        [file._id],
+      );
 
       const newFileName = name + '.' + file.type;
       file.parent = newParentDirectory._id;
@@ -223,23 +234,25 @@ class FileService {
           String(file.parent),
           userId,
         );
-        let index = parentDirectory.childs?.indexOf(
+        const index = parentDirectory.childs?.indexOf(
           file._id,
         ) as unknown as number;
-        const array = parentDirectory.childs || [];
-
-        while (index !== -1) {
-          parentDirectory.childs?.splice(index, 1);
-          index = array.indexOf(file._id);
-        }
+        parentDirectory.childs?.splice(index, 1);
+        const newDirecorySize = parentDirectory.size - file.size;
 
         await this.fileRepository.saveNewChilds(
           parentDirectory._id,
+          newDirecorySize,
           parentDirectory.childs,
         );
       }
 
-      await this.fileRepository.addChilds(newParentDirectory._id, [file._id]);
+      const newDirecorySize = newParentDirectory.size + file.size;
+      await this.fileRepository.addChilds(
+        newParentDirectory._id,
+        newDirecorySize,
+        [file._id],
+      );
 
       file.parent = newParentDirectory._id;
 
@@ -262,9 +275,14 @@ class FileService {
     file.childs?.length
       ? Promise.all([
           this.deleteChilds(file, userId),
-          this.deleteFileFromParent(file._id, file.parent, userId),
+          this.deleteFileFromParent(file._id, file.parent, userId, file.size),
         ])
-      : await this.deleteFileFromParent(file._id, file.parent, userId);
+      : await this.deleteFileFromParent(
+          file._id,
+          file.parent,
+          userId,
+          file.size,
+        );
 
     const deletedFile = await this.fileRepository.delete({
       _id: id,
@@ -274,7 +292,7 @@ class FileService {
     return deletedFile;
   }
 
-  async getParentFile(parentId: string, userId: Types.ObjectId) {
+  private async getParentFile(parentId: string, userId: Types.ObjectId) {
     const isValidId = isValidObjectId(parentId);
 
     if (!isValidId) throw new HttpError('Directory id is not valid', 400);
@@ -311,10 +329,15 @@ class FileService {
     fileId: Types.ObjectId,
     parentId: Types.ObjectId | null,
     userId: Types.ObjectId,
+    fileSize: number,
   ) {
     if (parentId) {
+      const fileDirectory = await this.getParentFile(String(parentId), userId);
+      const newDirecorySize = fileDirectory.size - fileSize;
+
       await this.fileRepository.deleteFileFromParent({
         fileId,
+        directorySize: newDirecorySize,
         parentId,
         userId,
       });
@@ -359,6 +382,18 @@ class FileService {
   private async getLink(id: string) {
     const link = await this.botService.getLink(id);
     return link;
+  }
+
+  private checkNewParentDirectory(
+    fileParentId: Types.ObjectId | null,
+    parentId?: string,
+  ) {
+    if (String(fileParentId) === String(parentId)) {
+      throw new HttpError(
+        'Unable to add an existing file to the directory',
+        409,
+      );
+    }
   }
 }
 

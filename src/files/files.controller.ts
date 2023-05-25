@@ -604,6 +604,17 @@ class FileController {
      *                 value:
      *                   status: 404
      *                   error: File not found
+     *       409:
+     *         description: The requested file is already in the directory.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
+     *             examples:
+     *               overrides:
+     *                 value:
+     *                   status: 409
+     *                   error: Unable to add an existing file to the directory
      *       500:
      *         description: Internal Server Error
      *         content:

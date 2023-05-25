@@ -18,10 +18,12 @@ export interface IFileRepository<T> {
   deleteFileFromParent: (query: DeleteFromParentDto) => Promise<UpdateResult>;
   addChilds: (
     parentId: mongoose.Types.ObjectId,
+    directorySize: number,
     childIds: mongoose.Types.ObjectId[],
   ) => Promise<UpdateResult>;
   saveNewChilds: (
     parentId: mongoose.Types.ObjectId,
+    directorySize: number,
     childIds: mongoose.Types.ObjectId[] | undefined,
   ) => Promise<UpdateResult>;
   saveFileLink: (
