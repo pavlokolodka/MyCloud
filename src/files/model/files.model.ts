@@ -48,48 +48,43 @@ import { IFile } from './files.interface';
  *           format: date-time
  *           description: The date when the file was last updated.
  */
-const fileSchema = new Schema<IFile>({
-  name: {
-    type: String,
-    required: true,
-  },
-  storageId: {
-    type: String,
-  },
-  link: {
-    type: String,
-  },
-  size: {
-    type: Number,
-    required: true,
-  },
-  type: {
-    type: String,
-    required: true,
-  },
-  userId: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  parent: {
-    type: Schema.Types.ObjectId,
-    ref: 'File',
-  },
-  childs: [
-    {
+const fileSchema = new Schema<IFile>(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+    storageId: {
+      type: String,
+    },
+    link: {
+      type: String,
+    },
+    size: {
+      type: Number,
+      required: true,
+    },
+    type: {
+      type: String,
+      required: true,
+    },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    parent: {
       type: Schema.Types.ObjectId,
       ref: 'File',
     },
-  ],
-  createdAt: {
-    type: Date,
-    default: Date.now,
+    childs: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'File',
+      },
+    ],
   },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  { timestamps: true },
+);
 
 export const File = model<IFile>('File', fileSchema);

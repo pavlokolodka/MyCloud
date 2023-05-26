@@ -9,11 +9,16 @@ import { Sort } from '../../../src/files/types/files.sort';
 import { DeleteFromParentDto } from '../../../src/files/dto/delete-parent.dto';
 
 export default class MockFileRepository implements IFileRepository<IFile> {
-  public addChilds(parentId: Types.ObjectId, childIds: Types.ObjectId[]) {
+  public addChilds(
+    parentId: Types.ObjectId,
+    directorySize: number,
+    childIds: Types.ObjectId[],
+  ) {
     return Promise.resolve(updateResultMock);
   }
   public saveNewChilds(
     parentId: Types.ObjectId,
+    directorySize: number,
     childIds: Types.ObjectId[] | undefined,
   ) {
     return Promise.resolve(updateResultMock);
