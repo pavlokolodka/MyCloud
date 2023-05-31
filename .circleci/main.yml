@@ -13,7 +13,7 @@ jobs:
       name: node/default
       tag: '18.16'
     steps:
-      - checkout
+      - checkout             # pull the code from repository (similar git clone)
       - run: node --version
       - node/install-packages:
           pkg-manager: npm
@@ -30,9 +30,29 @@ jobs:
       - run:
           command: sleep 5 && curl -I localhost:5000
           name: Verify server is running
+  deploy:
+    machine:
+      image: ubuntu-2004:current
+    resource_class: medium
+    steps:
+      - run:
+          command: curl -v $DEPLOY_URI
+          name: Deploy API to Render      
 
 workflows:
-  build_and_test_app:
+  test_and_deploy_app:
     when: << pipeline.parameters.build-code >>
     jobs:
       - build_and_test
+      - deploy:
+          requires:
+           - build_and_test
+          filters:
+            branches:
+                only: master  
+  # deploy_app:
+  #   jobs: 
+  #     - deploy:
+  #         filters:
+  #         branches:
+  #             only: master  
