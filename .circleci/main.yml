@@ -36,8 +36,19 @@ jobs:
     resource_class: medium
     steps:
       - run:
-          command: curl -v $DEPLOY_URI
-          name: Deploy API to Render      
+          name: Deploy API to Render
+          command: |
+            response=$(curl -s -w "%{http_code}" -o response.txt $DEPLOY_URI)
+            response_code=${response:(-3)}
+            if [ $response_code -eq 200 ]; then
+              echo "Deployment successful!"
+              cat response.txt  # Print the response body
+            else
+              echo "Deployment failed with response code: $response_code"
+              cat response.txt  # Print the response body
+              exit 1
+            fi
+
 
 workflows:
   test_and_deploy_app:
@@ -49,10 +60,5 @@ workflows:
            - build_and_test
           filters:
             branches:
-                only: master  
-  # deploy_app:
-  #   jobs: 
-  #     - deploy:
-  #         filters:
-  #         branches:
-  #             only: master  
+                only: feature/deploy  
+  
