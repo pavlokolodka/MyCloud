@@ -11,7 +11,7 @@ workflows:
       - path-filtering/filter:
           name: Check updated files
           base-revision: master
-          config-path: .circleci/build-and-test.yml
+          config-path: .circleci/main.yml
           # for more parameters see https://circleci.com/developer/orbs/orb/circleci/path-filtering
           mapping: src/.* build-code true
             

@@ -5,9 +5,7 @@ import { chatID } from './constants';
 import { FileOptions } from '../files/types/file-options.type';
 
 export class BotService {
-  constructor(
-    private readonly bot = new TelegramBot(token, { polling: true }),
-  ) {}
+  constructor(private readonly bot = new TelegramBot(token)) {}
 
   greet() {
     this.bot.on('message', (msg: TelegramBot.Message) => {

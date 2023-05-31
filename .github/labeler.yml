@@ -1,5 +1,5 @@
 # Add 'test' label to any change of test directory:
-test:
+tests:
 - test/**
 
 # Add 'file' label to any change of files directory:
