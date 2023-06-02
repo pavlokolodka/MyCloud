@@ -8,18 +8,19 @@ import FileService from './files.service';
 import { uploadMiddlware } from '../middleware/uploadMiddleware';
 
 import {
-  directoryValidation,
+  createFileValidation,
   updateFileValidation,
 } from '../middleware/validators/validator';
 import DataEncode from '../utils/file-encryption/encrypt';
 import { UserService } from '../users/users.service';
 import { extractUserId } from '../middleware/auth';
 import {
-  ICreateDirectoryBody,
   IGetFilesParams,
   IUpdateFileBody,
 } from '../middleware/validators/types';
 import { prepareValidationErrorMessage } from '../utils/validation-error';
+import { IFileMetadata } from './dto/file-metadata.dto';
+import { IFile } from './model/files.interface';
 
 /**
  * @swagger
@@ -153,7 +154,7 @@ class FileController {
      * @swagger
      * /files:
      *   get:
-     *     summary: Get all files
+     *     summary: Get all files (directories)
      *     tags: [Files]
      *     parameters:
      *       - $ref: '#/components/parameters/sortByParam'
@@ -239,7 +240,7 @@ class FileController {
      * @swagger
      * /files/{id}:
      *   get:
-     *     summary: Get a file by ID
+     *     summary: Get a file (directory) by ID
      *     tags: [Files]
      *     parameters:
      *       - in: path
@@ -330,107 +331,9 @@ class FileController {
 
     /**
      * @swagger
-     * /files/directory:
-     *   post:
-     *     summary: Create a new directory.
-     *     tags: [Files]
-     *     requestBody:
-     *       required: true
-     *       description: The request body for creating a new directory type of ICreateDirectoryBody.
-     *       content:
-     *         application/json:
-     *           schema:
-     *             $ref: '#/components/schemas/ICreateDirectoryBody'
-     *     responses:
-     *       200:
-     *         description: A new directory has been created.
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/File'
-     *       400:
-     *         description: Bad Request
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/HttpError'
-     *             examples:
-     *               overrides:
-     *                 value:
-     *                   status: 400
-     *                   error: validation error
-     *       401:
-     *         description: Unauthorized
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/HttpError'
-     *             examples:
-     *               overrides:
-     *                 value:
-     *                   status: 401
-     *                   error: Authorization token is required
-     *       403:
-     *         description: Forbidden
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/HttpError'
-     *             examples:
-     *               overrides:
-     *                 value:
-     *                   status: 403
-     *                   error: User not have permission to access this file
-     *       500:
-     *         description: Internal Server Error
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/HttpError'
-     */
-    this.router.post(
-      `${this.path}/directory`,
-      extractUserId,
-      directoryValidation,
-      async (req: Request, res: Response, next: NextFunction) => {
-        try {
-          const errors = validationResult(req);
-
-          if (!errors.isEmpty()) {
-            throw new HttpError(
-              prepareValidationErrorMessage(errors.array()),
-              400,
-            );
-          }
-
-          const { name, parent }: ICreateDirectoryBody = req.body;
-          const userId = req.user.id;
-          const candidate = await this.userService.getUserById(userId);
-
-          if (!candidate)
-            throw new HttpError(
-              'User not have permission to access this file',
-              403,
-            );
-
-          const file = await this.fileService.createDirectory(
-            name,
-
-            candidate._id,
-            parent,
-          );
-          return res.send(file);
-        } catch (e: unknown) {
-          next(e);
-        }
-      },
-    );
-
-    /**
-     * @swagger
      * /files:
      *   post:
-     *     summary: Create a new file
+     *     summary: Create a new file (directory)
      *     tags: [Files]
      *     requestBody:
      *       content:
@@ -446,8 +349,14 @@ class FileController {
      *                 type: string
      *                 example: 48748c09-402a-4252-a08a-1b75f6556acb
      *                 description: The ID of the parent directory. If not provided, the new file will be created in the root directory.
-     *             required:
-     *               - file
+     *               type:
+     *                 type: string
+     *                 enum: [directory]
+     *                 description: If provided, the new directory will be created. This parameter also requires the name parameter
+     *               name:
+     *                 type: string
+     *                 example: directory name
+     *                 description: The name of the new directory
      *     responses:
      *       200:
      *         description: A new file has been created.
@@ -499,15 +408,22 @@ class FileController {
       this.path,
       extractUserId,
       uploadMiddlware,
+      createFileValidation,
       async (req: Request, res: Response, next: NextFunction) => {
         try {
-          const reqFile: any = req.files?.file;
-          const parent = req.fields?.parent as string;
+          const errors = validationResult(req);
 
-          if (!reqFile)
-            return res
-              .status(400)
-              .send({ message: 'File not passed', status: 400 });
+          if (!errors.isEmpty()) {
+            throw new HttpError(
+              prepareValidationErrorMessage(errors.array()),
+              400,
+            );
+          }
+
+          const reqFile = req.files?.file as unknown as IFileMetadata;
+          const parent = req.fields?.parent as string;
+          const type = req.fields?.type as string;
+          const directoryName = req.fields?.name as string;
 
           const userId = req.user.id;
           const candidate = await this.userService.getUserById(userId);
@@ -518,11 +434,30 @@ class FileController {
               403,
             );
 
-          const file = await this.fileService.create(
-            reqFile,
-            candidate._id,
-            parent,
-          );
+          let file: IFile;
+
+          if (type) {
+            // check if the file was also uploaded
+            if (reqFile) {
+              await this.fileService.deleteFromDisk(reqFile.path);
+            }
+
+            file = await this.fileService.createDirectory(
+              directoryName,
+              candidate._id,
+              parent,
+            );
+          } else {
+            if (!reqFile) {
+              throw new HttpError('File not passed', 400);
+            }
+
+            file = await this.fileService.create(
+              reqFile,
+              candidate._id,
+              parent,
+            );
+          }
 
           return res.send(file);
         } catch (e: unknown) {
@@ -536,7 +471,7 @@ class FileController {
      *
      * /files/{id}:
      *   patch:
-     *     summary: Update a file by ID.
+     *     summary: Update a file (directory) by ID.
      *     tags:
      *       - Files
      *     parameters:
@@ -672,7 +607,7 @@ class FileController {
      * @swagger
      * /files/{id}:
      *   delete:
-     *     summary: Delete a file by ID.
+     *     summary: Delete a file (directory) by ID.
      *     tags: [Files]
      *     parameters:
      *       - in: path
