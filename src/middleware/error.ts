@@ -14,7 +14,7 @@ export const errorHandler = (
         `Bearer realm="Access to the MyCloud", error=${error.message}, error_description="The access token is invalid or expired"`,
       );
     }
-    res
+    return res
       .status(error.status)
       .send({ message: error.message, status: error.status });
   }

@@ -53,13 +53,6 @@ export const passwordResetValidation = [
   }),
 ];
 
-export const directoryValidation = [
-  body(`name`)
-    .isString()
-    .notEmpty()
-    .withMessage('Directory name is not passed'),
-];
-
 export const updateFileValidation = [
   body(`name`)
     .optional()
@@ -70,5 +63,49 @@ export const updateFileValidation = [
     .optional()
     .isString()
     .notEmpty()
-    .withMessage('Parent must be not empty string of valid directory id'),
+    .withMessage('ParentId must be not empty string of valid directory id'),
+];
+
+export const createFileValidation = [
+  body(`type`).custom((value, { req }) => {
+    // formidable stores values in the "fields" object
+    const typeField = req.fields?.type;
+
+    if (!typeField) return true;
+
+    if (typeof typeField !== 'string' || typeField !== 'directory') {
+      throw new Error('Type field must be a string with a valid value');
+    }
+
+    return true;
+  }),
+  body(`parent`).custom((value, { req }) => {
+    // formidable stores values in the "fields" object
+    const parentIdField = req.fields?.parent;
+
+    if (!parentIdField) return true;
+
+    if (typeof parentIdField !== 'string') {
+      throw new Error(
+        'ParentId must be not empty string of valid directory id',
+      );
+    }
+
+    return true;
+  }),
+  body(`name`).custom((value, { req }) => {
+    // formidable stores values in the "fields" object
+    const nameField = req.fields?.name;
+    const typeField = req.fields?.type;
+
+    if (!typeField) return true;
+
+    if (typeof nameField !== 'string') {
+      throw new Error(
+        'Name must be not empty string when creating a directory',
+      );
+    }
+
+    return true;
+  }),
 ];
