@@ -105,7 +105,7 @@ class FileRouter {
      * @swagger
      * /files:
      *   get:
-     *     summary: Get all files
+     *     summary: Get all files (directories)
      *     tags: [Files]
      *     security:
      *       - bearerAuth: []
@@ -167,7 +167,7 @@ class FileRouter {
      * @swagger
      * /files/{id}:
      *   get:
-     *     summary: Get a file by ID
+     *     summary: Get a file (directory) by ID
      *     tags: [Files]
      *     security:
      *       - bearerAuth: []
@@ -244,7 +244,7 @@ class FileRouter {
      * @swagger
      * /files:
      *   post:
-     *     summary: Create a new file
+     *     summary: Create a new file (directory)
      *     tags: [Files]
      *     security:
      *       - bearerAuth: []
@@ -262,11 +262,17 @@ class FileRouter {
      *                 type: string
      *                 example: 48748c09-402a-4252-a08a-1b75f6556acb
      *                 description: The ID of the parent directory. If not provided, the new file will be created in the root directory.
-     *             required:
-     *               - file
+     *               type:
+     *                 type: string
+     *                 enum: [directory]
+     *                 description: If provided, the new directory will be created. This parameter also requires the name parameter
+     *               name:
+     *                 type: string
+     *                 example: directory name
+     *                 description: The name of the new directory
      *     responses:
      *       200:
-     *         description: A new file has been created.
+     *         description: A new file/directory has been created.
      *         content:
      *           application/json:
      *             schema:
@@ -323,7 +329,7 @@ class FileRouter {
      *
      * /files/{id}:
      *   patch:
-     *     summary: Update a file by ID.
+     *     summary: Update a file (directory) by ID.
      *     tags: [Files]
      *     security:
      *       - bearerAuth: []
@@ -421,7 +427,7 @@ class FileRouter {
      * @swagger
      * /files/{id}:
      *   delete:
-     *     summary: Delete a file by ID.
+     *     summary: Delete a file (directory) by ID.
      *     tags: [Files]
      *     security:
      *       - bearerAuth: []
