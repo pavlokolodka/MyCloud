@@ -31,6 +31,8 @@ class FileRouter {
      *   get:
      *     tags: [Files]
      *     summary: Download a file
+     *     security:
+     *       - bearerAuth: []
      *     produces:
      *       - application/octet-stream
      *     parameters:
@@ -108,6 +110,8 @@ class FileRouter {
      *   get:
      *     summary: Get all files
      *     tags: [Files]
+     *     security:
+     *       - bearerAuth: []
      *     parameters:
      *       - $ref: '#/components/parameters/sortByParam'
      *       - $ref: '#/components/parameters/parentParam'
@@ -168,6 +172,8 @@ class FileRouter {
      *   get:
      *     summary: Get a file by ID
      *     tags: [Files]
+     *     security:
+     *       - bearerAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -243,6 +249,8 @@ class FileRouter {
      *   post:
      *     summary: Create a new directory.
      *     tags: [Files]
+     *     security:
+     *       - bearerAuth: []
      *     requestBody:
      *       required: true
      *       description: The request body for creating a new directory type of ICreateDirectoryBody.
@@ -310,6 +318,8 @@ class FileRouter {
      *   post:
      *     summary: Create a new file
      *     tags: [Files]
+     *     security:
+     *       - bearerAuth: []
      *     requestBody:
      *       content:
      *         multipart/form-data:
@@ -386,8 +396,9 @@ class FileRouter {
      * /files/{id}:
      *   patch:
      *     summary: Update a file by ID.
-     *     tags:
-     *       - Files
+     *     tags: [Files]
+     *     security:
+     *       - bearerAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -484,6 +495,8 @@ class FileRouter {
      *   delete:
      *     summary: Delete a file by ID.
      *     tags: [Files]
+     *     security:
+     *       - bearerAuth: []
      *     parameters:
      *       - in: path
      *         name: id

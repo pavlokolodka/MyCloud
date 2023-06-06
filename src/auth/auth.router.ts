@@ -186,6 +186,8 @@ class AuthRouter {
      *   post:
      *     summary: Refresh access and refresh tokens.
      *     tags: [Auth]
+     *     security:
+     *       - bearerAuth: []
      *     requestBody:
      *       required: true
      *       description: The request body for refreshing access and refresh tokens type of IRefreshTokensBody.

@@ -2,10 +2,14 @@
 
 MyCloud is a file server written in Node.js that provides file management capabilities with unlimited storage. 
 
+## 🔨 Test version: 
+> 1. [Main endpoing](https://test-cloud-ddxe.onrender.com/v1)
+> 2. [OpenAPI documentation](https://test-cloud-ddxe.onrender.com/v1/docs)
+
 ## 🔥 Features
 
 - File CRUD: Upload, download, update, and delete files with ease. Files can be stored and managed using a simple and intuitive API. MyCloud implements file encryption using the AES-256-CBC algorithm to enhance data security.
-- User Authentication: Secure sign-in and sign-up functionality allows users to create and manage their own accounts, providing a personalized experience.
+- User Authentication: Enable secure sign-in, sign-up, password recovery, and email verification functionality, empowering users to create and manage their accounts for a personalized experience.
 - Unlimited Storage: MyCloud offers unlimited storage for managing files, allowing users to store and retrieve files without worrying about storage limitations.
 
 ## 🚀 Installation
@@ -70,7 +74,7 @@ You can view the UML component and deployment diagrams by clicking on the link.
 MyCloud provides a RESTful API with OpenAPI documentation, allowing developers to easily understand and utilize its functionality.
 Detailed documentation of the API endpoints and usage can be found in
 
-> [localhost:5000/api](http://localhost:5000/api)
+> [localhost:5000/docs](http://localhost:5000/docs)
 
 ### Development:
 
