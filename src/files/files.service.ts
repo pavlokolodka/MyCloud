@@ -1,4 +1,4 @@
-import { unlink } from 'node:fs';
+import { unlink } from 'fs/promises';
 import { Types } from 'mongoose';
 import { BotService } from '../bot/bot.service';
 import { isValidObjectId } from '../utils/isObjectId';
@@ -12,6 +12,7 @@ import {
 import { FileOptions } from './types/file-options.type';
 import DataEncode from '../utils/file-encryption/encrypt';
 import { Sort } from './types/files.sort';
+import { IFileMetadata } from './dto/file-metadata.dto';
 
 class FileService {
   private fileRepository: IFileRepository<IFile>;
@@ -68,7 +69,11 @@ class FileService {
     };
   }
 
-  async create(reqFile: any, userId: Types.ObjectId, parent?: string) {
+  async create(
+    reqFile: IFileMetadata,
+    userId: Types.ObjectId,
+    parent?: string,
+  ) {
     const path = reqFile.path;
     const fileOptions = {
       filename: reqFile.name,
@@ -89,9 +94,9 @@ class FileService {
       fileId = savedFile.document.file_id;
     }
 
-    this.deleteFromDisk(path);
+    await this.deleteFromDisk(path);
     const fileLink = await this.botService.getLink(fileId);
-    const fileType = reqFile?.name?.split('.').pop();
+    const fileType = reqFile.name.split('.').pop() as string;
 
     if (!parent) {
       const file = await this.fileRepository.create({
@@ -367,15 +372,13 @@ class FileService {
 
     if (!file) throw new HttpError('Internal Server Error', 500);
 
-    this.deleteFromDisk(encryptedFilePath);
+    await this.deleteFromDisk(encryptedFilePath);
 
     return file;
   }
 
-  private deleteFromDisk(path: string) {
-    unlink(path, (err) => {
-      if (err) throw err;
-    });
+  public deleteFromDisk(path: string) {
+    return unlink(path);
   }
 
   private async getLink(id: string) {

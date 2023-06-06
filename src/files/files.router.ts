@@ -1,10 +1,7 @@
 import { Router } from 'express';
 import { extractUserId } from '../middleware/auth';
 import FileController from './files.controller';
-import {
-  directoryValidation,
-  updateFileValidation,
-} from '../middleware/validators/validator';
+import { updateFileValidation } from '../middleware/validators/validator';
 import { uploadMiddlware } from '../middleware/uploadMiddleware';
 
 /**
@@ -241,75 +238,6 @@ class FileRouter {
       `${this.path}/:id`,
       extractUserId,
       this.fileController.getOne,
-    );
-
-    /**
-     * @swagger
-     * /files/directory:
-     *   post:
-     *     summary: Create a new directory.
-     *     tags: [Files]
-     *     security:
-     *       - bearerAuth: []
-     *     requestBody:
-     *       required: true
-     *       description: The request body for creating a new directory type of ICreateDirectoryBody.
-     *       content:
-     *         application/json:
-     *           schema:
-     *             $ref: '#/components/schemas/ICreateDirectoryBody'
-     *     responses:
-     *       200:
-     *         description: A new directory has been created.
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/File'
-     *       400:
-     *         description: Bad Request
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/HttpError'
-     *             examples:
-     *               overrides:
-     *                 value:
-     *                   status: 400
-     *                   error: validation error
-     *       401:
-     *         description: Unauthorized
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/HttpError'
-     *             examples:
-     *               overrides:
-     *                 value:
-     *                   status: 401
-     *                   error: Authorization token is required
-     *       403:
-     *         description: Forbidden
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/HttpError'
-     *             examples:
-     *               overrides:
-     *                 value:
-     *                   status: 403
-     *                   error: User not have permission to access this file
-     *       500:
-     *         description: Internal Server Error
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/HttpError'
-     */
-    this.router.post(
-      `${this.path}/directory`,
-      extractUserId,
-      directoryValidation,
-      this.fileController.createDirectory,
     );
 
     /**

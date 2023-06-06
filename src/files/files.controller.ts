@@ -8,11 +8,12 @@ import FileService from './files.service';
 import DataEncode from '../utils/file-encryption/encrypt';
 import { UserService } from '../users/users.service';
 import {
-  ICreateDirectoryBody,
   IGetFilesParams,
   IUpdateFileBody,
 } from '../middleware/validators/types';
 import { prepareValidationErrorMessage } from '../utils/validation-error';
+import { IFileMetadata } from './dto/file-metadata.dto';
+import { IFile } from './model/files.interface';
 
 class FileController {
   private fileService: FileService;
@@ -101,11 +102,7 @@ class FileController {
     }
   };
 
-  public createDirectory = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
+  public create = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req);
 
@@ -113,37 +110,10 @@ class FileController {
         throw new HttpError(prepareValidationErrorMessage(errors.array()), 400);
       }
 
-      const { name, parent }: ICreateDirectoryBody = req.body;
-      const userId = req.user.id;
-      const candidate = await this.userService.getUserById(userId);
-
-      if (!candidate)
-        throw new HttpError(
-          'User not have permission to access this file',
-          403,
-        );
-
-      const file = await this.fileService.createDirectory(
-        name,
-
-        candidate._id,
-        parent,
-      );
-      return res.send(file);
-    } catch (e: unknown) {
-      next(e);
-    }
-  };
-
-  public create = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const reqFile: any = req.files?.file;
+      const reqFile = req.files?.file as unknown as IFileMetadata;
       const parent = req.fields?.parent as string;
-
-      if (!reqFile)
-        return res
-          .status(400)
-          .send({ message: 'File not passed', status: 400 });
+      const type = req.fields?.type as string;
+      const directoryName = req.fields?.name as string;
 
       const userId = req.user.id;
       const candidate = await this.userService.getUserById(userId);
@@ -154,11 +124,26 @@ class FileController {
           403,
         );
 
-      const file = await this.fileService.create(
-        reqFile,
-        candidate._id,
-        parent,
-      );
+      let file: IFile;
+
+      if (type) {
+        // check if the file was also uploaded
+        if (reqFile) {
+          await this.fileService.deleteFromDisk(reqFile.path);
+        }
+
+        file = await this.fileService.createDirectory(
+          directoryName,
+          candidate._id,
+          parent,
+        );
+      } else {
+        if (!reqFile) {
+          throw new HttpError('File not passed', 400);
+        }
+
+        file = await this.fileService.create(reqFile, candidate._id, parent);
+      }
 
       return res.send(file);
     } catch (e: unknown) {
