@@ -62,7 +62,7 @@ class Server {
         ],
       },
       apis: [
-        path.resolve('src') + '/*/*.controller.ts',
+        path.resolve('src') + '/*/*.router.ts',
         path.resolve('src') + '/*/dto/*.dto.ts',
         path.resolve('src') + '/*/model/*.model.ts',
         path.resolve('src') + '/utils/Error.ts',
@@ -81,7 +81,7 @@ class Server {
 
   private initializeControllers(controllers: any) {
     controllers.forEach((controller: any) => {
-      this.app.use('/', controller.router);
+      this.app.use(controller.router);
     });
   }
 
