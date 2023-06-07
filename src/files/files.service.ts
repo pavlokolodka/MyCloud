@@ -175,8 +175,6 @@ class FileService {
     parentId?: string,
   ) {
     const file = await this.getOne(fileId, userId);
-    console.log('file', file, 'new parent', parentId);
-    console.log('old parent', file.parent, 'new parent', parentId);
     this.checkNewParentDirectory(file.parent, parentId);
 
     if (name && parentId) {

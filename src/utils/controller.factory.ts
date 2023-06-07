@@ -1,5 +1,5 @@
-export default class ControllerFactory {
-  static createController = (dependencies: Map<any, Array<any>>) => {
+export default class ModuleFactory {
+  static createModule = (dependencies: Map<any, Array<any>>) => {
     const createdDependents = [];
     const iterator = dependencies.keys();
     let dependent = iterator.next().value;
@@ -19,7 +19,7 @@ export default class ControllerFactory {
 
         if (localDependency instanceof Map) {
           const nestedDependencies: Array<any> =
-            ControllerFactory.createController(localDependency);
+            ModuleFactory.createModule(localDependency);
           createdDependencies.push(...nestedDependencies);
         } else {
           createdDependencies.push(new localDependency());

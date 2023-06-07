@@ -44,7 +44,7 @@ class Server {
         openapi: '3.0.0',
         info: {
           title: 'MyCloud API',
-          version: '1.0.0',
+          version: '0.0.1',
         },
         components: {
           securitySchemes: {
@@ -55,14 +55,16 @@ class Server {
             },
           },
         },
-        security: [
+        servers: [
+          { url: 'http://localhost:5000/v1', description: 'Localhost' },
           {
-            bearerAuth: [],
+            url: 'https://test-cloud-ddxe.onrender.com/v1',
+            description: 'Main server',
           },
         ],
       },
       apis: [
-        path.resolve('src') + '/*/*.controller.ts',
+        path.resolve('src') + '/*/*.router.ts',
         path.resolve('src') + '/*/dto/*.dto.ts',
         path.resolve('src') + '/*/model/*.model.ts',
         path.resolve('src') + '/utils/Error.ts',
@@ -72,8 +74,8 @@ class Server {
 
     const swaggerSpec = swaggerJSDoc(options);
 
-    this.app.use('/api', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-    this.app.get('/api.json', (req: Request, res: Response) => {
+    this.app.use('/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+    this.app.get('/v1/docs.json', (req: Request, res: Response) => {
       res.setHeader('Content-Type', 'application/json');
       res.send(swaggerSpec);
     });
@@ -81,7 +83,7 @@ class Server {
 
   private initializeControllers(controllers: any) {
     controllers.forEach((controller: any) => {
-      this.app.use('/', controller.router);
+      this.app.use('/v1', controller.router);
     });
   }
 
