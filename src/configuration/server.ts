@@ -6,6 +6,9 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerJSDoc from 'swagger-jsdoc';
 import { ConnectToDb } from './database-connection';
 import { errorHandler } from '../middleware/error';
+import logger from '../utils/logger';
+import { loggerMiddleware } from '../middleware/logger';
+import { Sentry } from '../../sentry';
 
 class Server {
   public app: express.Application;
@@ -32,6 +35,9 @@ class Server {
     this.app.use(cors());
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(express.json());
+    this.app.use(loggerMiddleware);
+    this.app.use(Sentry.Handlers.requestHandler());
+    this.app.use(Sentry.Handlers.tracingHandler());
   }
 
   private initializeAfterMiddlewares() {
@@ -93,7 +99,7 @@ class Server {
 
   public listen() {
     this.app.listen(this.port, () => {
-      console.log(`Server is running at http://localhost:${this.port}`);
+      logger.info(`Server is running at http://localhost:${this.port}`);
     });
   }
 }
