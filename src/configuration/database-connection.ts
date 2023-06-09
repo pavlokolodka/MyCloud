@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import logger from '../utils/logger';
 
 export class ConnectToDb {
   private URI = process.env.MONGODB_URI!;
@@ -16,7 +17,7 @@ export class ConnectToDb {
 
   public connect() {
     mongoose.connect(this.URI, () => {
-      console.log('Connected to database');
+      logger.info('Connected to database');
     });
   }
 }
