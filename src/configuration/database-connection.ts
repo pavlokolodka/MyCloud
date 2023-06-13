@@ -15,10 +15,9 @@ export class ConnectToDb {
     return ConnectToDb.instance;
   }
 
-  public connect() {
-    mongoose.connect(this.URI, () => {
-      logger.info('Connected to database');
-    });
+  public async connect() {
+    await mongoose.connect(this.URI);
+    logger.info('Connected to database');
   }
 }
 

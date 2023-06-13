@@ -3,6 +3,7 @@ import { extractUserId } from '../middleware/auth';
 import FileController from './files.controller';
 import { updateFileValidation } from '../middleware/validators/validator';
 import { uploadMiddlware } from '../middleware/uploadMiddleware';
+import { uploadLargeFileMiddlware } from '../middleware/uploadLargeFile';
 
 /**
  * @swagger
@@ -322,6 +323,14 @@ class FileRouter {
       extractUserId,
       uploadMiddlware,
       this.fileController.create,
+    );
+
+    //large file upload
+    this.router.post(
+      `${this.path}/large`,
+      extractUserId,
+      uploadLargeFileMiddlware,
+      this.fileController.createLargeFile,
     );
 
     /**

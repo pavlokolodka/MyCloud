@@ -22,15 +22,17 @@ export class BotService {
     return res;
   }
 
-  sendDocs(file: any, fileOptions: FileOptions) {
+  sendDocs(file: any, fileOptions?: FileOptions) {
     const res = this.bot
-      .sendDocument(chatID, file, {}, fileOptions)
-      .catch((e) => {
-        throw new HttpError('internal server error', 500);
-      });
+      // .sendDocument(chatID, file, {}, fileOptions)
+      .sendDocument(chatID, file);
 
     return res;
   }
+
+  // inputFile(file: any) {
+  //   this.bot.InputFile()
+  // }
 
   sendAudio(file: any) {
     const res = this.bot.sendAudio(chatID, file).catch((e) => {

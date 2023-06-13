@@ -69,6 +69,18 @@ class FileService {
     };
   }
 
+  async downloadLarge(id: string, userId: Types.ObjectId) {
+    const file = await this.getOne(id, userId);
+
+    if (file.type === 'directory')
+      throw new HttpError('Can not get folder', 400);
+
+    return {
+      name: file.name,
+      chunks: file.chunks,
+    };
+  }
+
   async create(
     reqFile: IFileMetadata,
     userId: Types.ObjectId,
@@ -105,8 +117,8 @@ class FileService {
         link: fileLink,
         size: reqFile.size,
         type: fileType,
-        childs: null,
-        parent: null,
+        // childs: null,
+        // parent: null,
         userId: userId,
       });
 
@@ -121,7 +133,7 @@ class FileService {
       link: fileLink,
       size: reqFile.size,
       type: fileType!,
-      childs: null,
+      // childs: null,
       parent: fileParent._id,
       userId: userId,
     });
@@ -133,6 +145,32 @@ class FileService {
     return file;
   }
 
+  async createLargeFile(
+    name: string,
+    size: number,
+    chunks: string[],
+    userId: Types.ObjectId,
+    parent?: string,
+  ) {
+    const fileType = name.split('.').pop() as string;
+    const file = await this.fileRepository.create({
+      name,
+      size,
+      type: fileType,
+      // childs: null,
+      // parent: null,
+      userId: userId,
+      isComposed: true,
+      chunks,
+    });
+
+    return file;
+  }
+
+  async saveLargeFileChunk(reqFile: Buffer) {
+    return (await this.botService.sendDocs(reqFile)) as TelegramDocument;
+  }
+
   async createDirectory(name: string, userId: Types.ObjectId, parent?: string) {
     const type = 'directory';
 
@@ -140,7 +178,7 @@ class FileService {
       const directory = await this.fileRepository.create({
         name,
         type,
-        parent: null,
+        // parent: null,
         userId: userId,
         size: 0,
         childs: [],
@@ -354,6 +392,7 @@ class FileService {
     files.forEach(async (file) => {
       if (
         file.type !== 'directory' &&
+        !file.isComposed &&
         Number(file.updatedAt) + oneHour <= Date.now()
       ) {
         const newLink = await this.getLink(file.storageId!);
@@ -368,7 +407,8 @@ class FileService {
       path,
       fileOptions.secret,
     );
-    const file = await this.botService.sendDocs(encryptedFilePath, fileOptions);
+    // const file = await this.botService.sendDocs(encryptedFilePath, fileOptions);
+    const file = await this.botService.sendDocs(encryptedFilePath);
 
     if (!file) throw new HttpError('Internal Server Error', 500);
 
