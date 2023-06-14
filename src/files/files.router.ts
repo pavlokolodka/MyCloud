@@ -102,6 +102,12 @@ class FileRouter {
       this.fileController.download,
     );
 
+    this.router.get(
+      `${this.path}/download/large`,
+      extractUserId,
+      this.fileController.downloadLarge,
+    );
+
     /**
      * @swagger
      * /files:

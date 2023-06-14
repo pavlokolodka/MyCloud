@@ -75,9 +75,13 @@ class FileService {
     if (file.type === 'directory')
       throw new HttpError('Can not get folder', 400);
 
+    const chunkLinks = file.chunks!.map((chunkId: string) => {
+      return this.botService.getLink(chunkId);
+    });
+
     return {
       name: file.name,
-      chunks: file.chunks,
+      chunks: await Promise.all(chunkLinks),
     };
   }
 
@@ -117,8 +121,6 @@ class FileService {
         link: fileLink,
         size: reqFile.size,
         type: fileType,
-        // childs: null,
-        // parent: null,
         userId: userId,
       });
 
@@ -133,7 +135,6 @@ class FileService {
       link: fileLink,
       size: reqFile.size,
       type: fileType!,
-      // childs: null,
       parent: fileParent._id,
       userId: userId,
     });
@@ -157,8 +158,6 @@ class FileService {
       name,
       size,
       type: fileType,
-      // childs: null,
-      // parent: null,
       userId: userId,
       isComposed: true,
       chunks,
@@ -178,7 +177,6 @@ class FileService {
       const directory = await this.fileRepository.create({
         name,
         type,
-        // parent: null,
         userId: userId,
         size: 0,
         childs: [],
@@ -407,7 +405,6 @@ class FileService {
       path,
       fileOptions.secret,
     );
-    // const file = await this.botService.sendDocs(encryptedFilePath, fileOptions);
     const file = await this.botService.sendDocs(encryptedFilePath);
 
     if (!file) throw new HttpError('Internal Server Error', 500);
