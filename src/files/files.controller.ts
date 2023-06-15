@@ -16,7 +16,11 @@ import { IFileMetadata } from './dto/file-metadata.dto';
 import { IFile } from './model/files.interface';
 import { FileInfo } from './types/file-info';
 import { TelegramDocument } from '../bot/types/telegram-file.type';
-import { fetchAndSendChunks, handleFileEvent } from '../utils/file-upload';
+import {
+  fetchAndSendChunks,
+  handleCloseEvent,
+  handleFileEvent,
+} from '../utils/file-upload';
 
 class FileController {
   private fileService: FileService;
@@ -201,110 +205,55 @@ class FileController {
           403,
         );
 
+      const reqBodyLength = Number(req.headers['content-length']);
+      // 172 - the size of content length when the "file" field is empty
+      if (reqBodyLength <= 172) {
+        throw new HttpError('File not passed', 400);
+      }
+
+      req.pipe(req.busboy);
+
       const savedChunks: TelegramDocument[] = [];
       let fileName: string;
-      let saveLastChunk: Promise<void>;
+      let saveChunks: Promise<void>;
+      let fileDirectory = '';
 
-      const fn = (name: string, file: ReadStream, info: FileInfo) => {
-        handleFileEvent(
-          name,
-          file,
-          info,
-          fileName,
-          savedChunks,
-          saveLastChunk,
-          this.fileService.saveLargeFileChunk.bind(this).bind(this),
-        );
-      };
-      // req.busboy.on(
-      //   'file',
-      //  fn)
-
-      // register file listeners
       req.busboy.on(
         'file',
         async (name: string, file: ReadStream, info: FileInfo) => {
-          const highWaterMark = 20 * 1024 * 1024;
           fileName = info.filename;
-          let currentChunkSize = 0;
-          let rawFileData: Buffer[] = [];
-
-          await new Promise<void>((resolve) => {
-            file
-              .on('data', async (data: Buffer) => {
-                if (
-                  currentChunkSize < highWaterMark &&
-                  currentChunkSize + Buffer.byteLength(data) <= highWaterMark
-                ) {
-                  currentChunkSize += Buffer.byteLength(data);
-                  rawFileData.push(data);
-                } else {
-                  // pause data emitting
-                  file.pause();
-
-                  const savedChunk = await this.fileService.saveLargeFileChunk(
-                    Buffer.concat(rawFileData),
-                  );
-
-                  savedChunks.push(savedChunk);
-
-                  // save the lash data chunk from current stream
-                  currentChunkSize = Buffer.byteLength(data);
-                  rawFileData = [];
-                  rawFileData.push(data);
-
-                  // resume emitting the data stream
-                  file.resume();
-                }
-              })
-              .on('close', async () => {
-                // save last chunk data before closing the stream
-                if (rawFileData.length) {
-                  // eslint-disable-next-line no-async-promise-executor
-                  saveLastChunk = new Promise<void>(async (resolve) => {
-                    const savedChunk =
-                      await this.fileService.saveLargeFileChunk(
-                        Buffer.concat(rawFileData),
-                      );
-
-                    savedChunks.push(savedChunk);
-
-                    currentChunkSize = 0;
-                    rawFileData = [];
-
-                    resolve();
-                  });
-                }
-
-                resolve();
-              });
-          });
+          saveChunks = handleFileEvent(
+            file,
+            savedChunks,
+            this.fileService.saveLargeFileChunk.bind(this.fileService),
+          );
         },
       );
 
-      req.busboy.on('close', async () => {
-        await saveLastChunk;
-
-        const chunkIds: string[] = [];
-        let size = 0;
-
-        savedChunks.forEach((chunk: TelegramDocument) => {
-          size += chunk.document.file_size;
-          chunkIds.push(chunk.document.file_id);
-        });
-
-        const file = await this.fileService.createLargeFile(
-          fileName,
-          size,
-          chunkIds,
-          candidate._id,
-        );
-
-        res.send(file);
+      req.busboy.on('field', (name, val, info) => {
+        if (name === 'parent') {
+          fileDirectory = val;
+        }
       });
 
-      // pass the request stream through the busboy middleware
-      req.pipe(req.busboy);
+      await new Promise<void>((resolve, reject) => {
+        req.busboy.on('close', async () => {
+          try {
+            await saveChunks;
+            await handleCloseEvent(
+              fileName,
+              candidate._id,
+              savedChunks,
+              res,
+              this.fileService.createLargeFile.bind(this.fileService),
+              fileDirectory,
+            );
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
+        });
+      });
     } catch (error) {
       next(error);
     }

@@ -1,7 +1,9 @@
 import https from 'https';
 import { ReadStream, WriteStream } from 'fs';
-import { FileInfo } from '../files/types/file-info';
+import { Types } from 'mongoose';
+import { Response } from 'express';
 import { TelegramDocument } from '../bot/types/telegram-file.type';
+import { IFile } from '../files/model/files.interface';
 
 /**
  * Fetches multiple file chunks from the given URLs and sends the data to the client.
@@ -33,50 +35,55 @@ export async function fetchAndSendChunks(
   output.end();
 }
 
-// export const handleFileEvent = async (name: string, file: ReadStream, info: FileInfo, fileName: string, savedChunks: TelegramDocument[],  saveLastChunkPromise: Promise<void>, saveLargeFileChunk: (reqFile: Buffer) => Promise<TelegramDocument>) => {
+/**
+ * Saves a large file in parts.
+ * @param {ReadStream} file - A stream of input file.
+ * @param {TelegramDocument[]} savedChunks - An array for future processing saved chunks.
+ * @param {(reqFile: Buffer) => Promise<TelegramDocument>} saveLargeFileChunk - Function for saving chunks.
+ * @returns {Promise<void>} A Promise that resolves when all file chunks have been saved.
+ */
 export async function handleFileEvent(
-  name: string,
   file: ReadStream,
-  info: FileInfo,
-  fileName: string,
   savedChunks: TelegramDocument[],
-  saveLastChunkPromise: Promise<void>,
   saveLargeFileChunk: (reqFile: Buffer) => Promise<TelegramDocument>,
 ) {
   const highWaterMark = 20 * 1024 * 1024;
-  fileName = info.filename;
   let currentChunkSize = 0;
   let rawFileData: Buffer[] = [];
 
-  await new Promise<void>((resolve) => {
+  return await new Promise<void>((resolve, reject) => {
     file
       .on('data', async (data: Buffer) => {
-        if (
-          currentChunkSize < highWaterMark &&
-          currentChunkSize + Buffer.byteLength(data) <= highWaterMark
-        ) {
-          currentChunkSize += Buffer.byteLength(data);
-          rawFileData.push(data);
-        } else {
-          file.pause();
+        console.log(data);
+        try {
+          if (
+            currentChunkSize < highWaterMark &&
+            currentChunkSize + Buffer.byteLength(data) <= highWaterMark
+          ) {
+            currentChunkSize += Buffer.byteLength(data);
+            rawFileData.push(data);
+          } else {
+            file.pause();
 
-          const savedChunk = await saveLargeFileChunk(
-            Buffer.concat(rawFileData),
-          );
-          savedChunks.push(savedChunk);
+            const savedChunk = await saveLargeFileChunk(
+              Buffer.concat(rawFileData),
+            );
+            savedChunks.push(savedChunk);
 
-          currentChunkSize = Buffer.byteLength(data);
-          rawFileData = [];
-          rawFileData.push(data);
+            currentChunkSize = Buffer.byteLength(data);
+            rawFileData = [];
+            rawFileData.push(data);
 
-          file.resume();
+            file.resume();
+          }
+        } catch (error) {
+          reject(error);
         }
       })
       .on('close', async () => {
-        // save last chunk data before closing the stream
-        if (rawFileData.length) {
-          // eslint-disable-next-line no-async-promise-executor
-          saveLastChunkPromise = new Promise<void>(async (resolve) => {
+        try {
+          // save the last data before closing the stream
+          if (rawFileData.length) {
             const savedChunk = await saveLargeFileChunk(
               Buffer.concat(rawFileData),
             );
@@ -85,11 +92,58 @@ export async function handleFileEvent(
 
             currentChunkSize = 0;
             rawFileData = [];
+          }
 
-            resolve();
-          });
+          resolve();
+        } catch (error) {
+          reject(error);
         }
-        resolve();
       });
   });
+}
+
+/**
+ * Handles the close event for the large file upload.
+ * Waits for the completion of saving file chunks and creates the final large file.
+ *
+ * @param {string} fileName - The name of the file being uploaded.
+ * @param {Types.ObjectId} userId - The ID of the user uploading the file.
+ * @param {Promise<void>} saveChunks - Promise representing the completion of saving file chunks.
+ * @param {TelegramDocument[]} savedChunks - Array of saved file chunks.
+ * @param {Response} res - The response object to send the final file response.
+ * @param {Function} createLargeFile - Function to create the final large file.
+ * @param {string|undefined} directoryId - ID of the directory to save.
+ * @returns {Promise<void>} - A Promise that resolves once the final file is created and the response is sent.
+ */
+export async function handleCloseEvent(
+  fileName: string,
+  userId: Types.ObjectId,
+  savedChunks: TelegramDocument[],
+  res: Response,
+  createLargeFile: (
+    name: string,
+    size: number,
+    chunks: string[],
+    userId: Types.ObjectId,
+    parent?: string | undefined,
+  ) => Promise<IFile>,
+  directoryId?: string,
+) {
+  const chunkIds: string[] = [];
+  let size = 0;
+
+  savedChunks.forEach((chunk: TelegramDocument) => {
+    size += chunk.document.file_size;
+    chunkIds.push(chunk.document.file_id);
+  });
+
+  const file = await createLargeFile(
+    fileName,
+    size,
+    chunkIds,
+    userId,
+    directoryId,
+  );
+
+  res.send(file);
 }

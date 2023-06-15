@@ -154,6 +154,27 @@ class FileService {
     parent?: string,
   ) {
     const fileType = name.split('.').pop() as string;
+
+    if (parent) {
+      const fileParent = await this.getParentFile(parent, userId);
+      const newDirecorySize = fileParent.size + size;
+      const file = await this.fileRepository.create({
+        name,
+        size,
+        type: fileType,
+        userId: userId,
+        isComposed: true,
+        chunks,
+        parent: fileParent._id,
+      });
+
+      await this.fileRepository.addChilds(fileParent._id, newDirecorySize, [
+        file._id,
+      ]);
+
+      return file;
+    }
+
     const file = await this.fileRepository.create({
       name,
       size,
