@@ -235,6 +235,7 @@ describe('FileService', () => {
         link: `https://example.com/${telegramDocumentMock.document.file_id}`,
         storageId: telegramDocumentMock.document.file_id,
         childs: undefined,
+        isComposed: false,
       });
     });
 
@@ -255,6 +256,9 @@ describe('FileService', () => {
         size: 123,
         path: filePath,
       };
+      jest
+        .spyOn(botService, 'sendDocs')
+        .mockReturnValueOnce(Promise.resolve(telegramAudioDocumentMock));
 
       const result = await fileService.create(reqFile, userId);
 
@@ -271,6 +275,7 @@ describe('FileService', () => {
         link: `https://example.com/${telegramAudioDocumentMock.audio.file_id}`,
         storageId: telegramAudioDocumentMock.audio.file_id,
         childs: undefined,
+        isComposed: false,
       });
     });
 
@@ -315,6 +320,7 @@ describe('FileService', () => {
         link: `https://example.com/${telegramDocumentMock.document.file_id}`,
         storageId: telegramDocumentMock.document.file_id,
         childs: undefined,
+        isComposed: false,
       });
     });
 
@@ -339,6 +345,9 @@ describe('FileService', () => {
       jest
         .spyOn(fileRepository, 'getOne')
         .mockImplementationOnce(async () => mockDirectory);
+      jest
+        .spyOn(botService, 'sendDocs')
+        .mockReturnValueOnce(Promise.resolve(telegramAudioDocumentMock));
 
       const result = await fileService.create(
         reqFile,
@@ -359,6 +368,7 @@ describe('FileService', () => {
         link: `https://example.com/${telegramAudioDocumentMock.audio.file_id}`,
         storageId: telegramAudioDocumentMock.audio.file_id,
         childs: undefined,
+        isComposed: false,
       });
     });
 
@@ -501,6 +511,7 @@ describe('FileService', () => {
         childs: [],
         link: undefined,
         storageId: undefined,
+        isComposed: false,
       });
     });
 
@@ -526,6 +537,7 @@ describe('FileService', () => {
         childs: [],
         link: undefined,
         storageId: undefined,
+        isComposed: false,
       });
     });
 
@@ -570,6 +582,7 @@ describe('FileService', () => {
         childs: fileMock.childs,
         link: fileMock.link,
         storageId: fileMock.storageId,
+        isComposed: fileMock.isComposed,
       });
     });
 
@@ -593,6 +606,7 @@ describe('FileService', () => {
         childs: fileMock.childs,
         link: fileMock.link,
         storageId: fileMock.storageId,
+        isComposed: fileMock.isComposed,
       });
     });
 
@@ -621,6 +635,7 @@ describe('FileService', () => {
         childs: fileMock.childs,
         link: fileMock.link,
         storageId: fileMock.storageId,
+        isComposed: fileMock.isComposed,
       });
     });
 
@@ -672,49 +687,4 @@ describe('FileService', () => {
       });
     });
   });
-
-  // describe('getParentFile', () => {
-  //   it('should return the file parent if everything is correct', async () => {
-  //     jest.spyOn(fileRepository, 'getOne').mockResolvedValueOnce(mockDirectory);
-
-  //     const result = await fileService.getParentFile(
-  //       String(mockDirectory._id),
-  //       userId,
-  //     );
-
-  //     expect(result).toEqual(mockDirectory);
-  //   });
-
-  //   it('should throw an error if the user does not have permission to access the file', async () => {
-  //     jest.spyOn(fileRepository, 'getOne').mockResolvedValueOnce(mockDirectory);
-
-  //     expect(
-  //       fileService.getParentFile(
-  //         String(mockDirectory._id),
-  //         new Types.ObjectId(),
-  //       ),
-  //     ).rejects.toMatchObject({
-  //       message: 'User not have permission to access this file',
-  //       status: 403,
-  //     });
-  //   });
-
-  //   it('should throw an error if the file type is not a directory', async () => {
-  //     expect(
-  //       fileService.getParentFile(String(fileMock._id), userId),
-  //     ).rejects.toMatchObject({
-  //       message: 'Directory not exist',
-  //       status: 404,
-  //     });
-  //   });
-
-  //   it('should throw an error if the file is not exist', async () => {
-  //     expect(
-  //       fileService.getParentFile(String(new Types.ObjectId()), userId),
-  //     ).rejects.toMatchObject({
-  //       message: 'Directory not exist',
-  //       status: 404,
-  //     });
-  //   });
-  // });
 });

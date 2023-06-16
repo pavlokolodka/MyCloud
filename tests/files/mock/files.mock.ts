@@ -14,6 +14,7 @@ export const fileMock: IFile = {
   type: 'png',
   userId: new Types.ObjectId('64520c9ea01cb5187c1090cb'),
   parent: new Types.ObjectId('643a7e929cc0fb9639f98d0c'),
+  isComposed: false,
 };
 export const mockDirectory = {
   _id: new Types.ObjectId('643a7e929cc0fb9639f98d0c'),
@@ -24,6 +25,7 @@ export const mockDirectory = {
   type: 'directory',
   createdAt: new Date(),
   updatedAt: new Date(),
+  isComposed: false,
 };
 
 export const filesMock: IFile[] = [
@@ -37,6 +39,7 @@ export const filesMock: IFile[] = [
     link: 'http://localhost:9000/',
     createdAt: new Date(),
     updatedAt: new Date(),
+    isComposed: false,
   },
   {
     _id: new Types.ObjectId(),
@@ -48,6 +51,7 @@ export const filesMock: IFile[] = [
     link: 'http://localhost:9000/',
     createdAt: new Date(),
     updatedAt: new Date(),
+    isComposed: false,
   },
 ];
 

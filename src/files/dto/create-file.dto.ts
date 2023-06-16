@@ -3,7 +3,7 @@ import { Types } from 'mongoose';
 export interface CreateFileDto {
   name: string;
   type: string;
-  parent?: Types.ObjectId;
+  parent?: Types.ObjectId | null;
   userId: Types.ObjectId;
   link?: string;
   storageId?: string;

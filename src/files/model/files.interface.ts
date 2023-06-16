@@ -11,7 +11,7 @@ export interface IFile {
   type: string;
   userId: IUser['_id'];
   childs?: IFile['_id'][];
-  parent: IFile['_id'];
+  parent: IFile['_id'] | null;
   isComposed: boolean;
   chunks?: string[];
 }
