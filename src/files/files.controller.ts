@@ -14,6 +14,13 @@ import {
 import { prepareValidationErrorMessage } from '../utils/validation-error';
 import { IFileMetadata } from './dto/file-metadata.dto';
 import { IFile } from './model/files.interface';
+import { FileInfo } from './types/file-info';
+import { TelegramDocument } from '../bot/types/telegram-file.type';
+import {
+  fetchAndSendChunks,
+  handleCloseEvent,
+  handleFileEvent,
+} from '../utils/file-upload';
 
 class FileController {
   private fileService: FileService;
@@ -53,6 +60,38 @@ class FileController {
           savedFile.secret,
         );
       });
+    } catch (e: unknown) {
+      next(e);
+    }
+  };
+
+  public downloadLarge = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const id = req.query.id as string;
+
+      if (!id) throw new HttpError('File id not passed', 400);
+
+      const userId = req.user.id;
+      const candidate = await this.userService.getUserById(userId);
+
+      if (!candidate)
+        throw new HttpError(
+          'User not have permission to access this file',
+          403,
+        );
+
+      const savedFile = await this.fileService.downloadLarge(id, candidate._id);
+
+      res.set(
+        'Content-disposition',
+        'attachment; filename=' + encodeURI(savedFile.name),
+      );
+
+      await fetchAndSendChunks(savedFile.chunks, res as unknown as WriteStream);
     } catch (e: unknown) {
       next(e);
     }
@@ -148,6 +187,75 @@ class FileController {
       return res.send(file);
     } catch (e: unknown) {
       next(e);
+    }
+  };
+
+  public createLargeFile = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const userId = req.user.id;
+      const candidate = await this.userService.getUserById(userId);
+
+      if (!candidate)
+        throw new HttpError(
+          'User not have permission to access this file',
+          403,
+        );
+
+      const reqBodyLength = Number(req.headers['content-length']);
+      // 172 - the size of content length when the "file" field is empty
+      if (reqBodyLength <= 172) {
+        throw new HttpError('File not passed', 400);
+      }
+
+      req.pipe(req.busboy);
+
+      const savedChunks: TelegramDocument[] = [];
+      let fileName: string;
+      let saveChunks: Promise<void>;
+      let fileDirectory = '';
+
+      req.busboy.on(
+        'file',
+        async (name: string, file: ReadStream, info: FileInfo) => {
+          fileName = info.filename;
+          saveChunks = handleFileEvent(
+            file,
+            savedChunks,
+            this.fileService.saveLargeFileChunk.bind(this.fileService),
+          );
+        },
+      );
+
+      req.busboy.on('field', (name, val, info) => {
+        if (name === 'parent') {
+          fileDirectory = val;
+        }
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        req.busboy.on('close', async () => {
+          try {
+            await saveChunks;
+            await handleCloseEvent(
+              fileName,
+              candidate._id,
+              savedChunks,
+              res,
+              this.fileService.createLargeFile.bind(this.fileService),
+              fileDirectory,
+            );
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
+        });
+      });
+    } catch (error) {
+      next(error);
     }
   };
 

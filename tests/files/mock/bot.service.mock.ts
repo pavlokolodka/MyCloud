@@ -10,11 +10,7 @@ export default class MockBotService {
     return Promise.resolve(`Successfully sent photo: ${file}`);
   }
 
-  sendDocs(file: any, fileOptions: FileOptions) {
-    if (fileOptions.type.split('/')[0] === 'audio') {
-      return Promise.resolve(telegramAudioDocumentMock);
-    }
-
+  sendDocs(file: any) {
     return Promise.resolve(telegramDocumentMock);
   }
 

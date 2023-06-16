@@ -20,7 +20,7 @@ const config = {
 
   useFileHash: false,
 
-  moduleSystem: 'commmonjs',
+  moduleSystem: 'esm',
 };
 
 module.exports = config;

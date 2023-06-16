@@ -76,13 +76,23 @@ const fileSchema = new Schema<IFile>(
     parent: {
       type: Schema.Types.ObjectId,
       ref: 'File',
+      default: null,
     },
-    childs: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: 'File',
-      },
-    ],
+    childs: {
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: 'File',
+        },
+      ],
+    },
+    isComposed: {
+      type: Boolean,
+      default: false,
+    },
+    chunks: {
+      type: [String],
+    },
   },
   { timestamps: true },
 );

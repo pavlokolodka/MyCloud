@@ -37,10 +37,11 @@ export default class MockFileRepository implements IFileRepository<IFile> {
       updatedAt: new Date(),
       type: query.type,
       userId: query.userId,
-      parent: query.parent,
+      parent: query.parent || null,
       link: query.link,
       storageId: query.storageId,
       childs: query.childs || undefined,
+      isComposed: false,
     };
 
     return Promise.resolve(newFile);
