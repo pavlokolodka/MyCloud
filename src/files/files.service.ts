@@ -5,14 +5,8 @@ import { isValidObjectId } from '../utils/isObjectId';
 import { HttpError } from '../utils/Error';
 import { IFile } from './model/files.interface';
 import { IFileRepository } from './model/files.repository-interface';
-import {
-  TelegramAudioDocument,
-  TelegramDocument,
-} from '../bot/types/telegram-file.type';
-import { FileOptions } from './types/file-options.type';
-import DataEncode from '../utils/file-encryption/encrypt';
+import { TelegramDocument } from '../bot/types/telegram-file.type';
 import { Sort } from './types/files.sort';
-import { IFileMetadata } from './dto/file-metadata.dto';
 
 class FileService {
   private fileRepository: IFileRepository<IFile>;
@@ -86,67 +80,6 @@ class FileService {
   }
 
   async create(
-    reqFile: IFileMetadata,
-    userId: Types.ObjectId,
-    parent?: string,
-  ) {
-    const path = reqFile.path;
-    const fileOptions = {
-      filename: reqFile.name,
-      type: reqFile.type,
-      secret: String(userId),
-    } as FileOptions;
-    let fileId: string;
-    let savedFile: TelegramDocument | TelegramAudioDocument;
-
-    if (fileOptions.type.split('/')[0] === 'audio') {
-      savedFile = (await this.saveFile(
-        path,
-        fileOptions,
-      )) as TelegramAudioDocument;
-      fileId = savedFile.audio.file_id;
-    } else {
-      savedFile = (await this.saveFile(path, fileOptions)) as TelegramDocument;
-      fileId = savedFile.document.file_id;
-    }
-
-    await this.deleteFromDisk(path);
-    const fileLink = await this.botService.getLink(fileId);
-    const fileType = reqFile.name.split('.').pop() as string;
-
-    if (!parent) {
-      const file = await this.fileRepository.create({
-        name: reqFile.name,
-        storageId: fileId,
-        link: fileLink,
-        size: reqFile.size,
-        type: fileType,
-        userId: userId,
-      });
-
-      return file;
-    }
-
-    const fileParent = await this.getParentFile(parent, userId);
-    const newDirecorySize = fileParent.size + reqFile.size;
-    const file = await this.fileRepository.create({
-      name: reqFile.name,
-      storageId: fileId!,
-      link: fileLink,
-      size: reqFile.size,
-      type: fileType!,
-      parent: fileParent._id,
-      userId: userId,
-    });
-
-    await this.fileRepository.addChilds(fileParent._id, newDirecorySize, [
-      file._id,
-    ]);
-
-    return file;
-  }
-
-  async createLargeFile(
     name: string,
     size: number,
     chunks: string[],
@@ -154,35 +87,38 @@ class FileService {
     parent?: string,
   ) {
     const fileType = name.split('.').pop() as string;
+    const chunksLength = chunks.length;
+    const fileLink =
+      chunksLength === 1 ? await this.botService.getLink(chunks[0]) : undefined;
+    const storageId = chunksLength < 1 ? chunks[0] : undefined;
+    const isComposed = chunksLength > 1 ? true : false;
+    const fileChunks = chunksLength > 1 ? chunks : undefined;
+    let fileParent: IFile | undefined,
+      newDirecorySize = 0;
 
     if (parent) {
-      const fileParent = await this.getParentFile(parent, userId);
-      const newDirecorySize = fileParent.size + size;
-      const file = await this.fileRepository.create({
-        name,
-        size,
-        type: fileType,
-        userId: userId,
-        isComposed: true,
-        chunks,
-        parent: fileParent._id,
-      });
-
-      await this.fileRepository.addChilds(fileParent._id, newDirecorySize, [
-        file._id,
-      ]);
-
-      return file;
+      fileParent = await this.getParentFile(parent, userId);
+      newDirecorySize = fileParent.size + size;
     }
 
+    const fileParentId = fileParent ? fileParent._id : undefined;
     const file = await this.fileRepository.create({
       name,
       size,
+      link: fileLink,
       type: fileType,
-      userId: userId,
-      isComposed: true,
-      chunks,
+      storageId,
+      userId,
+      isComposed,
+      chunks: fileChunks,
+      parent: fileParentId,
     });
+
+    if (fileParentId) {
+      await this.fileRepository.addChilds(fileParentId, newDirecorySize, [
+        file._id,
+      ]);
+    }
 
     return file;
   }
@@ -419,20 +355,6 @@ class FileService {
         await this.fileRepository.saveFileLink(file._id, newLink);
       }
     });
-  }
-
-  private async saveFile(path: string, fileOptions: FileOptions) {
-    const encryptedFilePath = await DataEncode.encrypt(
-      path,
-      fileOptions.secret,
-    );
-    const file = await this.botService.sendDocs(encryptedFilePath);
-
-    if (!file) throw new HttpError('Internal Server Error', 500);
-
-    await this.deleteFromDisk(encryptedFilePath);
-
-    return file;
   }
 
   public deleteFromDisk(path: string) {

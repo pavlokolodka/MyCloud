@@ -85,6 +85,7 @@ const fileSchema = new Schema<IFile>(
           ref: 'File',
         },
       ],
+      default: () => null,
     },
     isComposed: {
       type: Boolean,
@@ -92,6 +93,7 @@ const fileSchema = new Schema<IFile>(
     },
     chunks: {
       type: [String],
+      default: () => null,
     },
   },
   { timestamps: true },

@@ -1,6 +1,5 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
-import * as fs from 'fs';
 import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJSDoc from 'swagger-jsdoc';
@@ -28,10 +27,6 @@ class Server {
   }
 
   private initializeBeforeMiddlewares() {
-    if (!fs.existsSync(path.resolve('src', 'storage'))) {
-      fs.mkdirSync(path.resolve('src', 'storage'));
-    }
-
     this.app.use(cors());
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(express.json());

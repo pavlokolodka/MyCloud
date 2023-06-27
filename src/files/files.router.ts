@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { extractUserId } from '../middleware/auth';
 import FileController from './files.controller';
 import { updateFileValidation } from '../middleware/validators/validator';
-import { uploadMiddlware } from '../middleware/uploadMiddleware';
 import { uploadLargeFileMiddlware } from '../middleware/uploadLargeFile';
 
 /**
@@ -398,86 +397,10 @@ class FileRouter {
      *               $ref: '#/components/schemas/HttpError'
      */
     this.router.post(
-      this.path,
-      extractUserId,
-      uploadMiddlware,
-      this.fileController.create,
-    );
-
-    /**
-     * @swagger
-     * /files/large:
-     *   post:
-     *     summary: Create a new large file (> 20 mb)
-     *     tags: [Files]
-     *     security:
-     *       - bearerAuth: []
-     *     requestBody:
-     *       content:
-     *         multipart/form-data:
-     *           schema:
-     *             type: object
-     *             properties:
-     *               file:
-     *                 type: string
-     *                 format: binary
-     *                 description: The file to be uploaded
-     *               parent:
-     *                 type: string
-     *                 example: 48748c09-402a-4252-a08a-1b75f6556acb
-     *                 description: The ID of the parent directory. If not provided, the new file will be created in the root directory.
-     *     responses:
-     *       200:
-     *         description: A new file has been created.
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/File'
-     *       400:
-     *         description: Invalid input data
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/HttpError'
-     *             examples:
-     *               overrides:
-     *                 value:
-     *                   status: 400
-     *                   error: validation error
-     *       401:
-     *         description: Unauthorized
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/HttpError'
-     *             examples:
-     *               overrides:
-     *                 value:
-     *                   status: 401
-     *                   error: Authorization token is required
-     *       403:
-     *         description: Forbidden
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/HttpError'
-     *             examples:
-     *               overrides:
-     *                 value:
-     *                   status: 403
-     *                   error: User not have permission to access this file
-     *       500:
-     *         description: Internal Server Error
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/HttpError'
-     */
-    this.router.post(
       `${this.path}/large`,
       extractUserId,
       uploadLargeFileMiddlware,
-      this.fileController.createLargeFile,
+      this.fileController.create,
     );
 
     /**
