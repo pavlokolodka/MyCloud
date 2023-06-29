@@ -17,6 +17,7 @@ import {
 } from '../utils/token';
 import { generatePasswordRecoveryNotification } from '../assets/password-recovery.infrom';
 import { ProfileData } from '../middleware/passport/types';
+import { RegistrationType } from '../users/model/users.interface';
 
 export class AuthService {
   private userService: UserService;
@@ -56,7 +57,20 @@ export class AuthService {
   }
 
   public async loginWithGoogle(googleUser: ProfileData) {
-    throw new Error('Method not implemented.');
+    const user = await this.userService.getUserWithGoogle(googleUser);
+    const { accessToken, refreshToken } = await generateTokens(user._id);
+
+    const response = {
+      accessToken,
+      refreshToken,
+      user: {
+        name: user.name,
+        id: user._id,
+        email: user.email,
+      },
+    };
+
+    return response;
   }
 
   public async register(payload: IRegisterDto) {
@@ -150,9 +164,16 @@ export class AuthService {
       throw new HttpError('Invalid verification token', 403);
     }
 
+    if (!user.password && user.registrationMethod === RegistrationType.Social) {
+      throw new HttpError(
+        'Password reset is not available for accounts with social login',
+        403,
+      );
+    }
+
     const isEqualPasswords = await bcrypt.compare(
       payload.newPassword,
-      user.password,
+      user.password as string,
     );
 
     if (isEqualPasswords) {

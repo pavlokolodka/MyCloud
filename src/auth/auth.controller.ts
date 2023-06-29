@@ -15,6 +15,7 @@ import {
 } from '../middleware/validators/types';
 import { prepareValidationErrorMessage } from '../utils/validation-error';
 import { ProfileData } from '../middleware/passport/types';
+import { RegistrationType } from '../users/model/users.interface';
 
 export class AuthController {
   private authService: AuthService;
@@ -38,9 +39,19 @@ export class AuthController {
 
       if (!candidate) throw new HttpError('Incorrect email or password', 422);
 
+      if (
+        !candidate.password &&
+        candidate.registrationMethod === RegistrationType.Social
+      ) {
+        throw new HttpError(
+          'This email is already registered with a social account',
+          409,
+        );
+      }
+
       const authenticatedUser = await this.authService.login({
         password,
-        userPassword: candidate.password,
+        userPassword: candidate.password as string,
         userName: candidate.name,
         userId: candidate._id,
         email,
@@ -244,7 +255,6 @@ export class AuthController {
     next: NextFunction,
   ) => {
     try {
-      console.log('user', req.user);
       const googleUser = req.user as unknown as ProfileData;
       const authenticatedUser = await this.authService.loginWithGoogle(
         googleUser,

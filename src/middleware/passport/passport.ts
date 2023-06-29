@@ -17,7 +17,7 @@ passport.use(
       accessToken: string,
       refreshToken: string,
       profile: any,
-      done,
+      done: (arg0: null | any, arg1: any) => any,
     ) {
       return done(null, profile._json);
     },

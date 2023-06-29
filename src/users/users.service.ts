@@ -1,3 +1,4 @@
+import { ProfileData } from '../middleware/passport/types';
 import { CreateUserDto } from './dto/create-user.dto';
 import { IUser } from './model/users.interface';
 import { IUserRepository } from './model/users.repository-interface';
@@ -16,6 +17,16 @@ export class UserService {
 
   public getUserById(id: string) {
     const user = this.userRepository.getOne(id);
+    return user;
+  }
+
+  public getUserWithGoogle(payload: ProfileData) {
+    const user = this.userRepository.upsertByProviderId({
+      name: payload.name,
+      email: payload.email,
+      openId: payload.sub,
+      pictureUrl: payload.picture,
+    });
     return user;
   }
 
