@@ -1,9 +1,10 @@
 import https from 'https';
 import { ReadStream, WriteStream } from 'fs';
 import { Types } from 'mongoose';
-import { Response } from 'express';
+import { NextFunction, Response } from 'express';
 import { TelegramDocument } from '../bot/types/telegram-file.type';
 import { IFile } from '../files/model/files.interface';
+import { HttpError } from './Error';
 
 /**
  * Fetches multiple file chunks from the given URLs and sends the data to the client.
@@ -54,7 +55,6 @@ export async function handleFileEvent(
   return await new Promise<void>((resolve, reject) => {
     file
       .on('data', async (data: Buffer) => {
-        console.log(data);
         try {
           if (
             currentChunkSize < highWaterMark &&
@@ -146,4 +146,58 @@ export async function handleCloseEvent(
   );
 
   res.send(file);
+}
+/**
+ * Handles a field event based on the field name.
+ * @param {string} name - The name of the field.
+ * @param {*} val - The value of the field.
+ * @param {string} fileDirectory - Variable for a file directory.
+ * @param {boolean} isDirectory - Variable indicates whether it is a directory.
+ * @param {string} directoryName - Variable for a directory name.
+ * @param {NextFunction} next - The next function to handle the event.
+ */
+export function handleFieldEvent(
+  name: string,
+  val: any,
+  state: any,
+  next: NextFunction,
+): void {
+  switch (name) {
+    case 'parent':
+      if (!val || typeof val !== 'string') {
+        return next(
+          new HttpError(
+            'ParentId must be not empty string of valid directory id',
+            400,
+          ),
+        );
+      }
+
+      state['fileDirectory'] = val;
+      break;
+    case 'type':
+      if (typeof val !== 'string' || val !== 'directory') {
+        return next(
+          new HttpError(
+            'Type field must be a string with a "directory" value',
+            400,
+          ),
+        );
+      }
+      state['isDirectory'] = true;
+
+      break;
+    case 'name':
+      if (!val || typeof val !== 'string') {
+        return next(
+          new HttpError(
+            'Name must be not empty string when creating a directory 1',
+            400,
+          ),
+        );
+      }
+      state['directoryName'] = val;
+
+      break;
+  }
 }

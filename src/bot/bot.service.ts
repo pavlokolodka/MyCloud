@@ -1,7 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { token } from './constants';
 import { chatID } from './constants';
-import { FileOptions } from '../files/types/file-options.type';
 
 export class BotService {
   constructor(private readonly bot = new TelegramBot(token)) {}
@@ -20,7 +19,7 @@ export class BotService {
     return res;
   }
 
-  sendDocs(file: any, fileOptions?: FileOptions) {
+  sendDocs(file: any) {
     const res = this.bot.sendDocument(chatID, file);
 
     return res;

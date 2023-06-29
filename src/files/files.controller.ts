@@ -5,20 +5,18 @@ import { IncomingMessage } from 'http';
 import { ReadStream, WriteStream } from 'fs';
 import { HttpError } from '../utils/Error';
 import FileService from './files.service';
-import DataEncode from '../utils/file-encryption/encrypt';
 import { UserService } from '../users/users.service';
 import {
   IGetFilesParams,
   IUpdateFileBody,
 } from '../middleware/validators/types';
 import { prepareValidationErrorMessage } from '../utils/validation-error';
-import { IFileMetadata } from './dto/file-metadata.dto';
-import { IFile } from './model/files.interface';
 import { FileInfo } from './types/file-info';
 import { TelegramDocument } from '../bot/types/telegram-file.type';
 import {
   fetchAndSendChunks,
   handleCloseEvent,
+  handleFieldEvent,
   handleFileEvent,
 } from '../utils/file-upload';
 
@@ -54,11 +52,13 @@ class FileController {
           'attachment; filename=' + encodeURI(savedFile.name),
         );
 
-        await DataEncode.decryptWithStream(
-          file as unknown as ReadStream,
-          res as unknown as WriteStream,
-          savedFile.secret,
-        );
+        file.pipe(res);
+
+        // await DataEncode.decryptWithStream(
+        //   file as unknown as ReadStream,
+        //   res as unknown as WriteStream,
+        //   savedFile.secret,
+        // );
       });
     } catch (e: unknown) {
       next(e);
@@ -143,59 +143,6 @@ class FileController {
 
   public create = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const errors = validationResult(req);
-
-      if (!errors.isEmpty()) {
-        throw new HttpError(prepareValidationErrorMessage(errors.array()), 400);
-      }
-
-      const reqFile = req.files?.file as unknown as IFileMetadata;
-      const parent = req.fields?.parent as string;
-      const type = req.fields?.type as string;
-      const directoryName = req.fields?.name as string;
-
-      const userId = req.user.id;
-      const candidate = await this.userService.getUserById(userId);
-
-      if (!candidate)
-        throw new HttpError(
-          'User not have permission to access this file',
-          403,
-        );
-
-      let file: IFile;
-
-      if (type) {
-        // check if the file was also uploaded
-        if (reqFile) {
-          await this.fileService.deleteFromDisk(reqFile.path);
-        }
-
-        file = await this.fileService.createDirectory(
-          directoryName,
-          candidate._id,
-          parent,
-        );
-      } else {
-        if (!reqFile) {
-          throw new HttpError('File not passed', 400);
-        }
-
-        file = await this.fileService.create(reqFile, candidate._id, parent);
-      }
-
-      return res.send(file);
-    } catch (e: unknown) {
-      next(e);
-    }
-  };
-
-  public createLargeFile = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
-    try {
       const userId = req.user.id;
       const candidate = await this.userService.getUserById(userId);
 
@@ -208,7 +155,7 @@ class FileController {
       const reqBodyLength = Number(req.headers['content-length']);
       // 172 - the size of content length when the "file" field is empty
       if (reqBodyLength <= 172) {
-        throw new HttpError('File not passed', 400);
+        throw new HttpError('File or required fields not passed', 400);
       }
 
       req.pipe(req.busboy);
@@ -216,7 +163,11 @@ class FileController {
       const savedChunks: TelegramDocument[] = [];
       let fileName: string;
       let saveChunks: Promise<void>;
-      let fileDirectory = '';
+      const fieldEventState = {} as {
+        fileDirectory: string;
+        isDirectory: boolean;
+        directoryName: string;
+      };
 
       req.busboy.on(
         'file',
@@ -230,23 +181,40 @@ class FileController {
         },
       );
 
-      req.busboy.on('field', (name, val, info) => {
-        if (name === 'parent') {
-          fileDirectory = val;
-        }
+      req.busboy.on('field', (name: string, val: string, info) => {
+        handleFieldEvent(name, val, fieldEventState, next);
       });
 
       await new Promise<void>((resolve, reject) => {
         req.busboy.on('close', async () => {
           try {
+            if (fieldEventState.isDirectory) {
+              // when name field is ommited
+              fieldEventState.directoryName ||
+                (() => {
+                  throw new HttpError(
+                    'Name must be not empty string when creating a directory',
+                    400,
+                  );
+                })();
+
+              const directory = await this.fileService.createDirectory(
+                fieldEventState.directoryName,
+                candidate._id,
+                fieldEventState.fileDirectory,
+              );
+
+              return res.send(directory);
+            }
+
             await saveChunks;
             await handleCloseEvent(
               fileName,
               candidate._id,
               savedChunks,
               res,
-              this.fileService.createLargeFile.bind(this.fileService),
-              fileDirectory,
+              this.fileService.create.bind(this.fileService),
+              fieldEventState.fileDirectory,
             );
             resolve();
           } catch (error) {

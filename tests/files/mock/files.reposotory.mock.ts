@@ -41,7 +41,8 @@ export default class MockFileRepository implements IFileRepository<IFile> {
       link: query.link,
       storageId: query.storageId,
       childs: query.childs || undefined,
-      isComposed: false,
+      chunks: query.chunks || undefined,
+      isComposed: query.isComposed || false,
     };
 
     return Promise.resolve(newFile);

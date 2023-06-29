@@ -1,5 +1,4 @@
-import { FileOptions } from '../../../src/files/types/file-options.type';
-import { telegramAudioDocumentMock, telegramDocumentMock } from './files.mock';
+import { telegramDocumentMock } from './files.mock';
 
 export default class MockBotService {
   greet() {
