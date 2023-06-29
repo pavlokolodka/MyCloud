@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import passport from 'passport';
 import { extractUserId } from '../middleware/auth';
 import {
   emailValidation,
@@ -507,6 +508,18 @@ class AuthRouter {
       `${this.path}/password-reset`,
       passwordResetValidation,
       this.authController.resetPassword,
+    );
+
+    this.router.get(
+      `${this.path}/login/google`,
+      // passport.authenticate('google')
+      this.authController.google,
+    );
+
+    this.router.get(
+      `${this.path}/google/callback`,
+      passport.authenticate('google', { session: false }),
+      this.authController.googleLogin,
     );
   }
 }

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
+import passport from 'passport';
 import { HttpError } from '../utils/Error';
 import { AuthService } from './auth.service';
 import { UserService } from '../users/users.service';
@@ -13,6 +14,7 @@ import {
   IVerificationTokenBody,
 } from '../middleware/validators/types';
 import { prepareValidationErrorMessage } from '../utils/validation-error';
+import { ProfileData } from '../middleware/passport/types';
 
 export class AuthController {
   private authService: AuthService;
@@ -36,7 +38,7 @@ export class AuthController {
 
       if (!candidate) throw new HttpError('Incorrect email or password', 422);
 
-      const singInUser = await this.authService.login({
+      const authenticatedUser = await this.authService.login({
         password,
         userPassword: candidate.password,
         userName: candidate.name,
@@ -45,7 +47,7 @@ export class AuthController {
         isVerified: candidate.isVerified,
       });
 
-      return res.send(singInUser);
+      return res.send(authenticatedUser);
     } catch (e: unknown) {
       next(e);
     }
@@ -223,6 +225,31 @@ export class AuthController {
       });
 
       return res.status(204).send();
+    } catch (e: unknown) {
+      next(e);
+    }
+  };
+
+  public google = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      return passport.authenticate('google')(req, res, next);
+    } catch (e: unknown) {
+      next(e);
+    }
+  };
+
+  public googleLogin = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      console.log('user', req.user);
+      const googleUser = req.user as unknown as ProfileData;
+      const authenticatedUser = await this.authService.loginWithGoogle(
+        googleUser,
+      );
+      res.send(authenticatedUser);
     } catch (e: unknown) {
       next(e);
     }

@@ -16,6 +16,7 @@ import {
   verifyRefreshToken,
 } from '../utils/token';
 import { generatePasswordRecoveryNotification } from '../assets/password-recovery.infrom';
+import { ProfileData } from '../middleware/passport/types';
 
 export class AuthService {
   private userService: UserService;
@@ -52,6 +53,10 @@ export class AuthService {
     };
 
     return user;
+  }
+
+  public async loginWithGoogle(googleUser: ProfileData) {
+    throw new Error('Method not implemented.');
   }
 
   public async register(payload: IRegisterDto) {
