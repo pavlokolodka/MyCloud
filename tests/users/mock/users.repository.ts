@@ -1,9 +1,13 @@
 import mongoose from 'mongoose';
 import { CreateUserDto } from '../../../src/users/dto/create-user.dto';
-import { IUser } from '../../../src/users/model/users.interface';
+import {
+  IUser,
+  RegistrationType,
+} from '../../../src/users/model/users.interface';
 import { IUserRepository } from '../../../src/users/model/users.repository-interface';
 import { deleteResultMock, updateResultMock, userMock } from './user.mock';
 import { UpdateUserDto } from '../../../src/users/dto/update-user.dto';
+import { UpsertUserWithGoogleDto } from '../../../src/users/dto/upsert-user-google.dto';
 
 export default class MockUserRepository implements IUserRepository<IUser> {
   public async create(query: CreateUserDto) {
@@ -13,6 +17,21 @@ export default class MockUserRepository implements IUserRepository<IUser> {
       email: query.email,
       password: query.password,
       isVerified: false,
+      registrationMethod: RegistrationType.Email,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    return userMock;
+  }
+
+  public async upsertByProviderId(query: UpsertUserWithGoogleDto) {
+    const userMock: IUser = {
+      _id: new mongoose.Types.ObjectId('6135ae5a40fbb50443d26a5f'),
+      name: query.name,
+      email: query.email,
+      isVerified: true,
+      registrationMethod: RegistrationType.Social,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

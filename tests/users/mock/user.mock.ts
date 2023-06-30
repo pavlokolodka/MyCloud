@@ -1,6 +1,9 @@
 import mongoose from 'mongoose';
 import { UpdateResult, DeleteResult } from 'mongodb';
-import { IUser } from '../../../src/users/model/users.interface';
+import {
+  IUser,
+  RegistrationType,
+} from '../../../src/users/model/users.interface';
 
 export const userMock: IUser = {
   _id: new mongoose.Types.ObjectId('60958c9f0000000000000000'),
@@ -10,6 +13,7 @@ export const userMock: IUser = {
   isVerified: true,
   createdAt: new Date(),
   updatedAt: new Date(),
+  registrationMethod: RegistrationType.Email,
 };
 
 export const deleteResultMock: DeleteResult = {
