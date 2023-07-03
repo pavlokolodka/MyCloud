@@ -19,6 +19,7 @@ import MailServiceMock from '../mock/mail.service';
 import { IMailService } from '../../src/notification-services/mail.interface';
 import * as tokenUtils from '../../src/utils/token';
 import { HttpError } from '../../src/utils/Error';
+import { RegistrationType } from '../../src/users/model/users.interface';
 
 jest.mock('bcrypt', () => ({
   compare: jest.fn((pass1, pass2) => pass1 === pass2),
@@ -189,6 +190,7 @@ describe('AuthService', () => {
           password:
             '$2b$10$C/gvB8dAxPpbljhXes0b5uGv5Hxaj5C5EL5GYQg.xttxJ1tQh88t6',
           isVerified: false,
+          registrationMethod: RegistrationType.Email,
           createdAt: new Date(),
           updatedAt: new Date(),
         });

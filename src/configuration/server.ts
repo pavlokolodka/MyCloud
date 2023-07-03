@@ -8,7 +8,7 @@ import { errorHandler } from '../middleware/error';
 import logger from '../utils/logger';
 import { loggerMiddleware } from '../middleware/logger';
 import { Sentry } from '../../sentry';
-
+import '../middleware/passport/passport';
 class Server {
   public app: express.Application;
   public port: number;

@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { IUser } from './users.interface';
+import { IUser, registrationTypeValues } from './users.interface';
 
 const userSchema = new Schema<IUser>(
   {
@@ -13,11 +13,17 @@ const userSchema = new Schema<IUser>(
     },
     password: {
       type: String,
-      required: true,
     },
     isVerified: {
       type: Boolean,
       default: false,
+    },
+    registrationMethod: {
+      type: String,
+      enum: {
+        values: registrationTypeValues,
+        message: '{VALUE} registration method is not supported',
+      },
     },
   },
   { timestamps: true },

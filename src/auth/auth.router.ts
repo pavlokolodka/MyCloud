@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import passport from 'passport';
 import { extractUserId } from '../middleware/auth';
 import {
   emailValidation,
@@ -507,6 +508,98 @@ class AuthRouter {
       `${this.path}/password-reset`,
       passwordResetValidation,
       this.authController.resetPassword,
+    );
+
+    /**
+     * @swagger
+     * /auth/login/google:
+     *   get:
+     *     summary: Login with Google.
+     *     tags: [Auth]
+     *     responses:
+     *       200:
+     *         description: Login successful. Returns an access token, a refresh token, and user information.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 accessToken:
+     *                   type: string
+     *                   description: Access token for the authenticated user.
+     *                 refreshToken:
+     *                   type: string
+     *                   description: Refresh token for the authenticated user.
+     *                 user:
+     *                   type: object
+     *                   properties:
+     *                     name:
+     *                       type: string
+     *                       description: Name of the authenticated user.
+     *                     email:
+     *                       type: string
+     *                       description: Email of the authenticated user.
+     *       500:
+     *         description: Internal Server Error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
+     *             examples:
+     *               overrides:
+     *                 value:
+     *                   status: 500
+     *                   error: Internal server error
+     */
+    this.router.get(`${this.path}/login/google`, this.authController.google);
+
+    /**
+     * @swagger
+     * /auth/google/callback:
+     *   get:
+     *     summary: Google callback for internal use.
+     *     description: This route is for internal use only and is called by Google as a callback after successful authentication. It should not be accessed directly by casual users.
+     *     tags: [Internal]
+     *     security: []
+     *     responses:
+     *       200:
+     *         description: Login successful. Returns an access token, a refresh token, and user information.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 accessToken:
+     *                   type: string
+     *                   description: Access token for the authenticated user.
+     *                 refreshToken:
+     *                   type: string
+     *                   description: Refresh token for the authenticated user.
+     *                 user:
+     *                   type: object
+     *                   properties:
+     *                     name:
+     *                       type: string
+     *                       description: Name of the authenticated user.
+     *                     email:
+     *                       type: string
+     *                       description: Email of the authenticated user.
+     *       500:
+     *         description: Internal Server Error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
+     *             examples:
+     *               overrides:
+     *                 value:
+     *                   status: 500
+     *                   error: Internal server error
+     */
+    this.router.get(
+      `${this.path}/google/callback`,
+      passport.authenticate('google', { session: false }),
+      this.authController.googleLogin,
     );
   }
 }
