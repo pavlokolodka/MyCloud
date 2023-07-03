@@ -4,6 +4,7 @@ import { userMock } from './mock/user.mock';
 import MockUserRepository from './mock/users.repository';
 import { IUser, RegistrationType } from '../../src/users/model/users.interface';
 import { IUserRepository } from '../../src/users/model/users.repository-interface';
+import { ProviderType } from '../../src/users/model/social-account.interface';
 
 describe('UserService', () => {
   let userService: UserService;
@@ -58,17 +59,14 @@ describe('UserService', () => {
     });
   });
 
-  describe('getUserWithGoogle', () => {
+  describe('getUserWithSocialAccount', () => {
     it('should return a user object when it exists with the provided open id', async () => {
-      const result = await userService.getUserWithGoogle({
-        sub: '123456789',
+      const result = await userService.getUserWithSocialAccount({
+        openId: '123456789',
         name: 'John Doe',
-        given_name: 'John',
-        family_name: 'Doe',
-        picture: 'https://example.com/profile-picture.jpg',
+        pictureUrl: 'https://example.com/profile-picture.jpg',
         email: 'johndoe@example.com',
-        email_verified: true,
-        locale: 'en_US',
+        provider: ProviderType.Google,
       });
 
       expect(result.name).toEqual('John Doe');
@@ -80,15 +78,12 @@ describe('UserService', () => {
 
     it('should create a user when an open id does not exist', async () => {
       const userId = 'nonexistent';
-      const result = await userService.getUserWithGoogle({
-        sub: '123456789',
+      const result = await userService.getUserWithSocialAccount({
+        openId: '123456789',
         name: 'John Doe',
-        given_name: 'John',
-        family_name: 'Doe',
-        picture: 'https://example.com/profile-picture.jpg',
+        pictureUrl: 'https://example.com/profile-picture.jpg',
         email: 'johndoe@example.com',
-        email_verified: true,
-        locale: 'en_US',
+        provider: ProviderType.Google,
       });
 
       expect(result.name).toEqual('John Doe');

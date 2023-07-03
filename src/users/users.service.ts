@@ -1,5 +1,5 @@
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpsertUserWithSocialAccountDto } from './dto/upsert-user-google.dto';
+import { UpsertUserWithSocialAccountDto } from './dto/upsert-user-social.dto';
 import { IUser } from './model/users.interface';
 import { IUserRepository } from './model/users.repository-interface';
 

@@ -1,7 +1,7 @@
 import { UpdateResult, DeleteResult } from 'mongodb';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { UpsertUserWithSocialAccountDto } from '../dto/upsert-user-google.dto';
+import { UpsertUserWithSocialAccountDto } from '../dto/upsert-user-social.dto';
 
 export interface IUserRepository<T> {
   create: (query: CreateUserDto) => Promise<T>;
