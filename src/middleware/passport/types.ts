@@ -1,4 +1,4 @@
-export interface ProfileData {
+export interface GoogleProfileData {
   sub: string;
   name: string;
   given_name: string;
@@ -7,4 +7,11 @@ export interface ProfileData {
   email: string;
   email_verified: boolean;
   locale: string;
+}
+
+export interface FacebookProfileData {
+  id: string;
+  name: string;
+  picture: string;
+  email: string;
 }

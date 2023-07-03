@@ -41,3 +41,9 @@ In case of login with Google provider, **MyCloud** used **Google OAuth 2.0 serve
 5. If the user is found, their information is updated (such as profile photo) and a `JWT` token is generated based on the id of the MonogoDB document. Otherwise the user is created and the `JWT` token generation procedure described above is repeated.
 6. The user can then use this token to access the files.
 ![Google auth diagram](https://miro.medium.com/v2/resize:fit:2000/format:webp/1*3hz6pZwAVX3NKxqbe4Lrkw.png)
+
+
+## Facebook authentication
+
+Facebook authentication is similar to Google authentication described above. <br/>
+The only problem is that Facebook supports email and phone as verification methods. While it's not a problem to get an email, it's more difficult to get a phone number because it requires the [pages_show_list](https://developers.facebook.com/docs/permissions/reference/) permission property, which can only be used for verified organizations. So for now, only accounts with Facebook email registration are supported.
