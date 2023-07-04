@@ -16,8 +16,12 @@ import {
   verifyRefreshToken,
 } from '../utils/token';
 import { generatePasswordRecoveryNotification } from '../assets/password-recovery.infrom';
-import { ProfileData } from '../middleware/passport/types';
+import {
+  FacebookProfileData,
+  GoogleProfileData,
+} from '../middleware/passport/types';
 import { RegistrationType } from '../users/model/users.interface';
+import { ProviderType } from '../users/model/social-account.interface';
 
 export class AuthService {
   private userService: UserService;
@@ -56,8 +60,37 @@ export class AuthService {
     return user;
   }
 
-  public async loginWithGoogle(googleUser: ProfileData) {
-    const user = await this.userService.getUserWithGoogle(googleUser);
+  public async loginWithGoogle(googleUser: GoogleProfileData) {
+    const user = await this.userService.getUserWithSocialAccount({
+      openId: googleUser.sub,
+      name: googleUser.name,
+      email: googleUser.email,
+      pictureUrl: googleUser.picture,
+      provider: ProviderType.Google,
+    });
+    const { accessToken, refreshToken } = await generateTokens(user._id);
+
+    const response = {
+      accessToken,
+      refreshToken,
+      user: {
+        name: user.name,
+        id: user._id,
+        email: user.email,
+      },
+    };
+
+    return response;
+  }
+
+  public async loginWithFacebook(facebookUser: FacebookProfileData) {
+    const user = await this.userService.getUserWithSocialAccount({
+      openId: facebookUser.id,
+      name: facebookUser.name,
+      email: facebookUser.email,
+      pictureUrl: facebookUser.picture,
+      provider: ProviderType.Facebook,
+    });
     const { accessToken, refreshToken } = await generateTokens(user._id);
 
     const response = {

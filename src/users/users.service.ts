@@ -1,5 +1,5 @@
-import { ProfileData } from '../middleware/passport/types';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpsertUserWithSocialAccountDto } from './dto/upsert-user-social.dto';
 import { IUser } from './model/users.interface';
 import { IUserRepository } from './model/users.repository-interface';
 
@@ -20,13 +20,8 @@ export class UserService {
     return user;
   }
 
-  public getUserWithGoogle(payload: ProfileData) {
-    const user = this.userRepository.upsertByProviderId({
-      name: payload.name,
-      email: payload.email,
-      openId: payload.sub,
-      pictureUrl: payload.picture,
-    });
+  public getUserWithSocialAccount(payload: UpsertUserWithSocialAccountDto) {
+    const user = this.userRepository.upsertByProviderId(payload);
     return user;
   }
 

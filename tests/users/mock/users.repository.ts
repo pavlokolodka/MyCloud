@@ -7,7 +7,7 @@ import {
 import { IUserRepository } from '../../../src/users/model/users.repository-interface';
 import { deleteResultMock, updateResultMock, userMock } from './user.mock';
 import { UpdateUserDto } from '../../../src/users/dto/update-user.dto';
-import { UpsertUserWithGoogleDto } from '../../../src/users/dto/upsert-user-google.dto';
+import { UpsertUserWithSocialAccountDto } from '../../../src/users/dto/upsert-user-social.dto';
 
 export default class MockUserRepository implements IUserRepository<IUser> {
   public async create(query: CreateUserDto) {
@@ -25,7 +25,7 @@ export default class MockUserRepository implements IUserRepository<IUser> {
     return userMock;
   }
 
-  public async upsertByProviderId(query: UpsertUserWithGoogleDto) {
+  public async upsertByProviderId(query: UpsertUserWithSocialAccountDto) {
     const userMock: IUser = {
       _id: new mongoose.Types.ObjectId('6135ae5a40fbb50443d26a5f'),
       name: query.name,

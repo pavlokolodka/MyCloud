@@ -1,5 +1,7 @@
 import { Types } from 'mongoose';
 import { CreateUserDto } from '../../../src/users/dto/create-user.dto';
+import { UpsertUserWithSocialAccountDto } from '../../../src/users/dto/upsert-user-social.dto';
+import { RegistrationType } from '../../../src/users/model/users.interface';
 
 class MockUserService {
   getUserByEmail(email: string) {
@@ -44,6 +46,19 @@ class MockUserService {
 
   async updatePassword(id: string, password: string) {
     await null;
+  }
+
+  public getUserWithSocialAccount(payload: UpsertUserWithSocialAccountDto) {
+    return Promise.resolve({
+      _id: new Types.ObjectId(),
+      name: payload.name,
+      email: payload.email,
+      password: undefined,
+      isVerified: true,
+      registrationMethod: RegistrationType.Social,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
   }
 }
 

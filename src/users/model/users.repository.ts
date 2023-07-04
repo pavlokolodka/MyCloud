@@ -5,7 +5,7 @@ import { IUser, RegistrationType } from './users.interface';
 import { User } from './users.model';
 import { IUserRepository } from './users.repository-interface';
 import { SocialAccount } from './social-account.model';
-import { UpsertUserWithGoogleDto } from '../dto/upsert-user-google.dto';
+import { UpsertUserWithSocialAccountDto } from '../dto/upsert-user-social.dto';
 
 export class UserRepository implements IUserRepository<IUser> {
   constructor(private database = User) {}
@@ -22,14 +22,14 @@ export class UserRepository implements IUserRepository<IUser> {
     return await this.database.findOne({ _id: id });
   }
 
-  public async upsertByProviderId(query: UpsertUserWithGoogleDto) {
+  public async upsertByProviderId(query: UpsertUserWithSocialAccountDto) {
     const session = await startSession();
     session.startTransaction();
 
     try {
       const socialAccount = await SocialAccount.findOneAndUpdate(
         { providerId: query.openId },
-        { $set: { profileUrl: query.pictureUrl } },
+        { $set: { profileUrl: query.pictureUrl, provider: query.provider } },
         { new: true, upsert: true, session },
       ).populate('userId');
 

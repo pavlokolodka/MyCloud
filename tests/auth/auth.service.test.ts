@@ -20,6 +20,7 @@ import { IMailService } from '../../src/notification-services/mail.interface';
 import * as tokenUtils from '../../src/utils/token';
 import { HttpError } from '../../src/utils/Error';
 import { RegistrationType } from '../../src/users/model/users.interface';
+import { userMock } from '../users/mock/user.mock';
 
 jest.mock('bcrypt', () => ({
   compare: jest.fn((pass1, pass2) => pass1 === pass2),
@@ -316,6 +317,56 @@ describe('AuthService', () => {
       ).rejects.toThrow(
         'User password should be different from an old password',
       );
+    });
+  });
+
+  describe('loginWithFacebook', () => {
+    it('should send email to recover the password', async () => {
+      const getUserWithSocialAccountSpy = jest.spyOn(
+        mockUserService,
+        'getUserWithSocialAccount',
+      );
+      const result = await authService.loginWithFacebook({
+        id: '123456789',
+        name: 'John Smith',
+        picture: 'http://example.com',
+        email: 'example@example.com',
+      });
+
+      expect(getUserWithSocialAccountSpy).toBeCalled();
+      expect(result).toMatchObject(authenticationResultShape);
+      expect(result.user.email).toBe('example@example.com');
+      expect(result.user.id).toBeDefined();
+      expect(result.user.name).toBe('John Smith');
+      expect(result.accessToken).toBe(testJWTToken);
+      expect(result.refreshToken).toBe(testJWTToken);
+    });
+  });
+
+  describe('loginWithGoogle', () => {
+    it('should send email to recover the password', async () => {
+      const getUserWithSocialAccountSpy = jest.spyOn(
+        mockUserService,
+        'getUserWithSocialAccount',
+      );
+      const result = await authService.loginWithGoogle({
+        sub: '123456789',
+        name: 'John Smith',
+        picture: 'http://example.com',
+        email: 'example@example.com',
+        given_name: '',
+        family_name: '',
+        email_verified: true,
+        locale: 'en',
+      });
+
+      expect(getUserWithSocialAccountSpy).toBeCalled();
+      expect(result).toMatchObject(authenticationResultShape);
+      expect(result.user.email).toBe('example@example.com');
+      expect(result.user.id).toBeDefined();
+      expect(result.user.name).toBe('John Smith');
+      expect(result.accessToken).toBe(testJWTToken);
+      expect(result.refreshToken).toBe(testJWTToken);
     });
   });
 });
