@@ -29,7 +29,7 @@ npm run migrate:create <migration-name>
 
 ## Access Control
 
-For user authentication MyCloud support `JWT` based authentication with email and password as well as Google login.
+For user authentication MyCloud support `JWT` based authentication with email and password as well as Google, Facebook, and Linkedin login.
 
 ## Google authentication
 
@@ -38,12 +38,21 @@ In case of login with Google provider, **MyCloud** used **Google OAuth 2.0 serve
 2. After successful authentication, Google sends an authorization code to the server's callback URL. <br/>
 3. Then the server exchanges the authorization code for an access token and refresh token, which can be used to authenticate requests to the Google API to get needed information on behalf of the user. <br/>
 4. Once the right data is received, **MyCloud** searches for the user using the open ID returned by the authorization provider. <br/>
-5. If the user is found, their information is updated (such as profile photo) and a `JWT` token is generated based on the id of the MonogoDB document. Otherwise the user is created and the `JWT` token generation procedure described above is repeated.
-6. The user can then use this token to access the files.
+5. If the user is found, their information is updated (such as profile photo) and a pair of `JWT` tokens is generated based on the id of the MonogoDB document. Otherwise the user is created and the `JWT` tokens generation procedure described above is repeated.
+6. The user can then use these tokens (`access` and `refresh`) to access the files.
 ![Google auth diagram](https://miro.medium.com/v2/resize:fit:2000/format:webp/1*3hz6pZwAVX3NKxqbe4Lrkw.png)
 
+Configuration: go to https://console.cloud.google.com/ and create a new project. After creating the project come to "APIs & Services" tab, where you can find "Credentials" tab for configuration OAuth client ID. In "OAuth consent screen" tab you need to add next scopes: `openid`, `profile` and `email`.
 
 ## Facebook authentication
 
 Facebook authentication is similar to Google authentication described above. <br/>
 The only problem is that Facebook supports email and phone as verification methods. While it's not a problem to get an email, it's more difficult to get a phone number because it requires the [pages_show_list](https://developers.facebook.com/docs/permissions/reference/) permission property, which can only be used for verified organizations. So for now, only accounts with Facebook email registration are supported.
+
+Configuration: go to https://developers.facebook.com/apps/ and create a new application. Then in product tab add "Facebook login". After it you can configure redirect URI (`localhost` is automatically enabled). In use case tab add next permissions: `email`, `public_profile`.  Credentials are located in "Settings" tab.
+
+## Linkedin authentication
+
+Linkedin authentication is similar to Google authentication described above. <br/>
+
+Configuration: go to https://developer.linkedin.com/ and create a new application. Then choose your app and in "Auth" tab you be able to find "OAuth 2.0 settings" section where you can add redirect URLs. Credentials are also located there.
