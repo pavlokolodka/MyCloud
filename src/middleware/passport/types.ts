@@ -15,3 +15,10 @@ export interface FacebookProfileData {
   picture: string;
   email: string;
 }
+
+export interface LinkedinProfileData {
+  id: string;
+  name: string;
+  picture: string;
+  email: string;
+}

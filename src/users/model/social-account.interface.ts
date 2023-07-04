@@ -4,6 +4,7 @@ import { IUser } from './users.interface';
 export enum ProviderType {
   Google = 'google',
   Facebook = 'facebook',
+  Linkedin = 'linkedin',
 }
 type PorviderValues = (typeof ProviderType)[keyof typeof ProviderType];
 
