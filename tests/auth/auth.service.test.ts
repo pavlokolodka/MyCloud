@@ -21,6 +21,7 @@ import * as tokenUtils from '../../src/utils/token';
 import { HttpError } from '../../src/utils/Error';
 import { RegistrationType } from '../../src/users/model/users.interface';
 import { userMock } from '../users/mock/user.mock';
+import { ProviderType } from '../../src/users/model/social-account.interface';
 
 jest.mock('bcrypt', () => ({
   compare: jest.fn((pass1, pass2) => pass1 === pass2),
@@ -321,19 +322,27 @@ describe('AuthService', () => {
   });
 
   describe('loginWithFacebook', () => {
-    it('should send email to recover the password', async () => {
+    it('should login user with Facebook', async () => {
       const getUserWithSocialAccountSpy = jest.spyOn(
         mockUserService,
         'getUserWithSocialAccount',
       );
-      const result = await authService.loginWithFacebook({
+      const facebookUser = {
         id: '123456789',
         name: 'John Smith',
         picture: 'http://example.com',
         email: 'example@example.com',
-      });
+      };
+      const result = await authService.loginWithFacebook(facebookUser);
 
       expect(getUserWithSocialAccountSpy).toBeCalled();
+      expect(getUserWithSocialAccountSpy).toBeCalledWith({
+        openId: facebookUser.id,
+        name: facebookUser.name,
+        email: facebookUser.email,
+        pictureUrl: facebookUser.picture,
+        provider: ProviderType.Facebook,
+      });
       expect(result).toMatchObject(authenticationResultShape);
       expect(result.user.email).toBe('example@example.com');
       expect(result.user.id).toBeDefined();
@@ -344,12 +353,12 @@ describe('AuthService', () => {
   });
 
   describe('loginWithGoogle', () => {
-    it('should send email to recover the password', async () => {
+    it('should login user with Google', async () => {
       const getUserWithSocialAccountSpy = jest.spyOn(
         mockUserService,
         'getUserWithSocialAccount',
       );
-      const result = await authService.loginWithGoogle({
+      const googleUser = {
         sub: '123456789',
         name: 'John Smith',
         picture: 'http://example.com',
@@ -358,9 +367,48 @@ describe('AuthService', () => {
         family_name: '',
         email_verified: true,
         locale: 'en',
-      });
+      };
+      const result = await authService.loginWithGoogle(googleUser);
 
       expect(getUserWithSocialAccountSpy).toBeCalled();
+      expect(getUserWithSocialAccountSpy).toBeCalledWith({
+        openId: googleUser.sub,
+        name: googleUser.name,
+        email: googleUser.email,
+        pictureUrl: googleUser.picture,
+        provider: ProviderType.Google,
+      });
+      expect(result).toMatchObject(authenticationResultShape);
+      expect(result.user.email).toBe('example@example.com');
+      expect(result.user.id).toBeDefined();
+      expect(result.user.name).toBe('John Smith');
+      expect(result.accessToken).toBe(testJWTToken);
+      expect(result.refreshToken).toBe(testJWTToken);
+    });
+  });
+
+  describe('loginWithLinkedin', () => {
+    it('should login user with Linkedin', async () => {
+      const getUserWithSocialAccountSpy = jest.spyOn(
+        mockUserService,
+        'getUserWithSocialAccount',
+      );
+      const linkedinUser = {
+        id: '123456789',
+        name: 'John Smith',
+        picture: 'http://example.com',
+        email: 'example@example.com',
+      };
+      const result = await authService.loginWithLinkedin(linkedinUser);
+
+      expect(getUserWithSocialAccountSpy).toBeCalled();
+      expect(getUserWithSocialAccountSpy).toBeCalledWith({
+        openId: linkedinUser.id,
+        name: linkedinUser.name,
+        email: linkedinUser.email,
+        pictureUrl: linkedinUser.picture,
+        provider: ProviderType.Linkedin,
+      });
       expect(result).toMatchObject(authenticationResultShape);
       expect(result.user.email).toBe('example@example.com');
       expect(result.user.id).toBeDefined();

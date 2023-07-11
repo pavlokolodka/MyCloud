@@ -17,6 +17,7 @@ import { prepareValidationErrorMessage } from '../utils/validation-error';
 import {
   FacebookProfileData,
   GoogleProfileData,
+  LinkedinProfileData,
 } from '../middleware/passport/types';
 import { RegistrationType } from '../users/model/users.interface';
 
@@ -261,6 +262,15 @@ export class AuthController {
     }
   };
 
+  public linkedin = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // return passport.authenticate('facebook')(req, res, next);
+      return passport.authenticate('linkedin')(req, res, next);
+    } catch (e: unknown) {
+      next(e);
+    }
+  };
+
   public googleLogin = async (
     req: Request,
     res: Response,
@@ -287,6 +297,23 @@ export class AuthController {
         facebookUser,
       );
       // console.log(req.user)
+      res.send(authenticatedUser);
+    } catch (e: unknown) {
+      next(e);
+    }
+  };
+
+  public linkedinLogin = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const linkedinUser = req.user as unknown as LinkedinProfileData;
+      const authenticatedUser = await this.authService.loginWithLinkedin(
+        linkedinUser,
+      );
+
       res.send(authenticatedUser);
     } catch (e: unknown) {
       next(e);

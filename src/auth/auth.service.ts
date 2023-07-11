@@ -19,6 +19,7 @@ import { generatePasswordRecoveryNotification } from '../assets/password-recover
 import {
   FacebookProfileData,
   GoogleProfileData,
+  LinkedinProfileData,
 } from '../middleware/passport/types';
 import { RegistrationType } from '../users/model/users.interface';
 import { ProviderType } from '../users/model/social-account.interface';
@@ -90,6 +91,29 @@ export class AuthService {
       email: facebookUser.email,
       pictureUrl: facebookUser.picture,
       provider: ProviderType.Facebook,
+    });
+    const { accessToken, refreshToken } = await generateTokens(user._id);
+
+    const response = {
+      accessToken,
+      refreshToken,
+      user: {
+        name: user.name,
+        id: user._id,
+        email: user.email,
+      },
+    };
+
+    return response;
+  }
+
+  public async loginWithLinkedin(linkedinUser: LinkedinProfileData) {
+    const user = await this.userService.getUserWithSocialAccount({
+      openId: linkedinUser.id,
+      name: linkedinUser.name,
+      email: linkedinUser.email,
+      pictureUrl: linkedinUser.picture,
+      provider: ProviderType.Linkedin,
     });
     const { accessToken, refreshToken } = await generateTokens(user._id);
 
