@@ -56,3 +56,9 @@ Configuration: go to https://developers.facebook.com/apps/ and create a new appl
 Linkedin authentication is similar to Google authentication described above. <br/>
 
 Configuration: go to https://developer.linkedin.com/ and create a new application. Then choose your app and in "Auth" tab you be able to find "OAuth 2.0 settings" section where you can add redirect URLs. Credentials are also located there.
+
+## GitHub authentication
+
+GitHub authentication is similar to Google authentication described above. <br/>
+
+Configuration: go to https://github.com/settings/applications/new and create a new application. Then fill all the required fields and click "Register application". Also there you can grab your credentials.

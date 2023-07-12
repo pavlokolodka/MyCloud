@@ -14,12 +14,7 @@ import {
   IVerificationTokenBody,
 } from '../middleware/validators/types';
 import { prepareValidationErrorMessage } from '../utils/validation-error';
-import {
-  FacebookProfileData,
-  GoogleProfileData,
-  LinkedinProfileData,
-  SocialProfileData,
-} from '../middleware/passport/types';
+import { SocialProfileData } from '../middleware/passport/types';
 import { RegistrationType } from '../users/model/users.interface';
 
 export class AuthController {
@@ -273,55 +268,6 @@ export class AuthController {
   public github = async (req: Request, res: Response, next: NextFunction) => {
     try {
       return passport.authenticate('github')(req, res, next);
-    } catch (e: unknown) {
-      next(e);
-    }
-  };
-
-  public googleLogin = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
-    try {
-      const googleUser = req.user as unknown as GoogleProfileData;
-      const authenticatedUser = await this.authService.loginWithGoogle(
-        googleUser,
-      );
-      res.send(authenticatedUser);
-    } catch (e: unknown) {
-      next(e);
-    }
-  };
-  public facebookLogin = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
-    try {
-      const facebookUser = req.user as unknown as FacebookProfileData;
-      const authenticatedUser = await this.authService.loginWithFacebook(
-        facebookUser,
-      );
-      // console.log(req.user)
-      res.send(authenticatedUser);
-    } catch (e: unknown) {
-      next(e);
-    }
-  };
-
-  public linkedinLogin = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
-    try {
-      const linkedinUser = req.user as unknown as LinkedinProfileData;
-      const authenticatedUser = await this.authService.loginWithLinkedin(
-        linkedinUser,
-      );
-
-      res.send(authenticatedUser);
     } catch (e: unknown) {
       next(e);
     }

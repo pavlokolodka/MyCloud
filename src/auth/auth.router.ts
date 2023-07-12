@@ -645,6 +645,47 @@ class AuthRouter {
       this.authController.linkedin,
     );
 
+    /**
+     * @swagger
+     * /auth/login/github:
+     *   get:
+     *     summary: Login with GitHub.
+     *     tags: [Auth]
+     *     responses:
+     *       200:
+     *         description: Login successful. Returns an access token, a refresh token, and user information.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 accessToken:
+     *                   type: string
+     *                   description: Access token for the authenticated user.
+     *                 refreshToken:
+     *                   type: string
+     *                   description: Refresh token for the authenticated user.
+     *                 user:
+     *                   type: object
+     *                   properties:
+     *                     name:
+     *                       type: string
+     *                       description: Name of the authenticated user.
+     *                     email:
+     *                       type: string
+     *                       description: Email of the authenticated user.
+     *       500:
+     *         description: Internal Server Error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
+     *             examples:
+     *               overrides:
+     *                 value:
+     *                   status: 500
+     *                   error: Internal server error
+     */
     this.router.get(`${this.path}/login/github`, this.authController.github);
 
     /**
@@ -693,7 +734,7 @@ class AuthRouter {
     this.router.get(
       `${this.path}/google/callback`,
       passport.authenticate('google', { session: false }),
-      this.authController.googleLogin,
+      this.authController.socialAccountLogin,
     );
 
     /**
@@ -742,7 +783,7 @@ class AuthRouter {
     this.router.get(
       `${this.path}/facebook/callback`,
       passport.authenticate('facebook', { session: false }),
-      this.authController.facebookLogin,
+      this.authController.socialAccountLogin,
     );
 
     /**
@@ -791,9 +832,52 @@ class AuthRouter {
     this.router.get(
       `${this.path}/linkedin/callback`,
       passport.authenticate('linkedin', { session: false }),
-      this.authController.linkedinLogin,
+      this.authController.socialAccountLogin,
     );
 
+    /**
+     * @swagger
+     * /auth/github/callback:
+     *   get:
+     *     summary: GitHub callback for internal use.
+     *     description: This route is for internal use only and is called by GitHub as a callback after successful authentication. It should not be accessed directly by casual users.
+     *     tags: [Internal]
+     *     security: []
+     *     responses:
+     *       200:
+     *         description: Login successful. Returns an access token, a refresh token, and user information.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 accessToken:
+     *                   type: string
+     *                   description: Access token for the authenticated user.
+     *                 refreshToken:
+     *                   type: string
+     *                   description: Refresh token for the authenticated user.
+     *                 user:
+     *                   type: object
+     *                   properties:
+     *                     name:
+     *                       type: string
+     *                       description: Name of the authenticated user.
+     *                     email:
+     *                       type: string
+     *                       description: Email of the authenticated user.
+     *       500:
+     *         description: Internal Server Error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HttpError'
+     *             examples:
+     *               overrides:
+     *                 value:
+     *                   status: 500
+     *                   error: Internal server error
+     */
     this.router.get(
       `${this.path}/github/callback`,
       passport.authenticate('github', { session: false }),

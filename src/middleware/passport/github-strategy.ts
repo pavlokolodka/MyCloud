@@ -18,7 +18,6 @@ passport.use(
       profile: any,
       done: (arg0: null | any, arg1: any) => any,
     ) {
-      console.log(profile);
       const profileObject: SocialProfileData = {
         id: profile._json.id,
         name: profile._json.name,
