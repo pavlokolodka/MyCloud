@@ -18,6 +18,7 @@ import {
   FacebookProfileData,
   GoogleProfileData,
   LinkedinProfileData,
+  SocialProfileData,
 } from '../middleware/passport/types';
 import { RegistrationType } from '../users/model/users.interface';
 
@@ -255,7 +256,6 @@ export class AuthController {
 
   public facebook = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // return passport.authenticate('facebook')(req, res, next);
       return passport.authenticate('facebook')(req, res, next);
     } catch (e: unknown) {
       next(e);
@@ -264,8 +264,15 @@ export class AuthController {
 
   public linkedin = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // return passport.authenticate('facebook')(req, res, next);
       return passport.authenticate('linkedin')(req, res, next);
+    } catch (e: unknown) {
+      next(e);
+    }
+  };
+
+  public github = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      return passport.authenticate('github')(req, res, next);
     } catch (e: unknown) {
       next(e);
     }
@@ -312,6 +319,23 @@ export class AuthController {
       const linkedinUser = req.user as unknown as LinkedinProfileData;
       const authenticatedUser = await this.authService.loginWithLinkedin(
         linkedinUser,
+      );
+
+      res.send(authenticatedUser);
+    } catch (e: unknown) {
+      next(e);
+    }
+  };
+
+  public socialAccountLogin = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const socialUser = req.user as unknown as SocialProfileData;
+      const authenticatedUser = await this.authService.loginWithSocialAccount(
+        socialUser,
       );
 
       res.send(authenticatedUser);

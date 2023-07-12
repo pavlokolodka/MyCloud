@@ -1,3 +1,5 @@
+import { ProviderType } from '../../users/model/social-account.interface';
+
 export interface GoogleProfileData {
   sub: string;
   name: string;
@@ -21,4 +23,12 @@ export interface LinkedinProfileData {
   name: string;
   picture: string;
   email: string;
+}
+
+export interface SocialProfileData {
+  id: string;
+  name: string;
+  picture: string;
+  email: string;
+  provider: ProviderType;
 }

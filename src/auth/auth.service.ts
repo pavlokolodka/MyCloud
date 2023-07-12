@@ -20,6 +20,7 @@ import {
   FacebookProfileData,
   GoogleProfileData,
   LinkedinProfileData,
+  SocialProfileData,
 } from '../middleware/passport/types';
 import { RegistrationType } from '../users/model/users.interface';
 import { ProviderType } from '../users/model/social-account.interface';
@@ -114,6 +115,29 @@ export class AuthService {
       email: linkedinUser.email,
       pictureUrl: linkedinUser.picture,
       provider: ProviderType.Linkedin,
+    });
+    const { accessToken, refreshToken } = await generateTokens(user._id);
+
+    const response = {
+      accessToken,
+      refreshToken,
+      user: {
+        name: user.name,
+        id: user._id,
+        email: user.email,
+      },
+    };
+
+    return response;
+  }
+
+  public async loginWithSocialAccount(payload: SocialProfileData) {
+    const user = await this.userService.getUserWithSocialAccount({
+      openId: payload.id,
+      name: payload.name,
+      email: payload.email,
+      pictureUrl: payload.picture,
+      provider: payload.provider,
     });
     const { accessToken, refreshToken } = await generateTokens(user._id);
 

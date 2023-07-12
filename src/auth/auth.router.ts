@@ -645,6 +645,8 @@ class AuthRouter {
       this.authController.linkedin,
     );
 
+    this.router.get(`${this.path}/login/github`, this.authController.github);
+
     /**
      * @swagger
      * /auth/google/callback:
@@ -790,6 +792,12 @@ class AuthRouter {
       `${this.path}/linkedin/callback`,
       passport.authenticate('linkedin', { session: false }),
       this.authController.linkedinLogin,
+    );
+
+    this.router.get(
+      `${this.path}/github/callback`,
+      passport.authenticate('github', { session: false }),
+      this.authController.socialAccountLogin,
     );
   }
 }
