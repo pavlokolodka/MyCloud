@@ -5,6 +5,7 @@ export enum ProviderType {
   Google = 'google',
   Facebook = 'facebook',
   Linkedin = 'linkedin',
+  GitHub = 'github',
 }
 type PorviderValues = (typeof ProviderType)[keyof typeof ProviderType];
 

@@ -14,11 +14,7 @@ import {
   IVerificationTokenBody,
 } from '../middleware/validators/types';
 import { prepareValidationErrorMessage } from '../utils/validation-error';
-import {
-  FacebookProfileData,
-  GoogleProfileData,
-  LinkedinProfileData,
-} from '../middleware/passport/types';
+import { SocialProfileData } from '../middleware/passport/types';
 import { RegistrationType } from '../users/model/users.interface';
 
 export class AuthController {
@@ -255,7 +251,6 @@ export class AuthController {
 
   public facebook = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // return passport.authenticate('facebook')(req, res, next);
       return passport.authenticate('facebook')(req, res, next);
     } catch (e: unknown) {
       next(e);
@@ -264,54 +259,29 @@ export class AuthController {
 
   public linkedin = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // return passport.authenticate('facebook')(req, res, next);
       return passport.authenticate('linkedin')(req, res, next);
     } catch (e: unknown) {
       next(e);
     }
   };
 
-  public googleLogin = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
+  public github = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const googleUser = req.user as unknown as GoogleProfileData;
-      const authenticatedUser = await this.authService.loginWithGoogle(
-        googleUser,
-      );
-      res.send(authenticatedUser);
-    } catch (e: unknown) {
-      next(e);
-    }
-  };
-  public facebookLogin = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
-    try {
-      const facebookUser = req.user as unknown as FacebookProfileData;
-      const authenticatedUser = await this.authService.loginWithFacebook(
-        facebookUser,
-      );
-      // console.log(req.user)
-      res.send(authenticatedUser);
+      return passport.authenticate('github')(req, res, next);
     } catch (e: unknown) {
       next(e);
     }
   };
 
-  public linkedinLogin = async (
+  public socialAccountLogin = async (
     req: Request,
     res: Response,
     next: NextFunction,
   ) => {
     try {
-      const linkedinUser = req.user as unknown as LinkedinProfileData;
-      const authenticatedUser = await this.authService.loginWithLinkedin(
-        linkedinUser,
+      const socialUser = req.user as unknown as SocialProfileData;
+      const authenticatedUser = await this.authService.loginWithSocialAccount(
+        socialUser,
       );
 
       res.send(authenticatedUser);
