@@ -551,7 +551,10 @@ class AuthRouter {
      *                   status: 500
      *                   error: Internal server error
      */
-    this.router.get(`${this.path}/login/google`, this.authController.google);
+    this.router.get(
+      `${this.path}/login/google`,
+      this.authController.googleLogin,
+    );
 
     /**
      * @swagger
@@ -596,7 +599,7 @@ class AuthRouter {
      */
     this.router.get(
       `${this.path}/login/facebook`,
-      this.authController.facebook,
+      this.authController.facebookLogin,
     );
 
     /**
@@ -642,7 +645,7 @@ class AuthRouter {
      */
     this.router.get(
       `${this.path}/login/linkedin`,
-      this.authController.linkedin,
+      this.authController.linkedinLogin,
     );
 
     /**
@@ -686,7 +689,15 @@ class AuthRouter {
      *                   status: 500
      *                   error: Internal server error
      */
-    this.router.get(`${this.path}/login/github`, this.authController.github);
+    this.router.get(
+      `${this.path}/login/github`,
+      this.authController.githubLogin,
+    );
+
+    this.router.get(
+      `${this.path}/login/twitter`,
+      this.authController.twitterLogin,
+    );
 
     /**
      * @swagger
@@ -881,6 +892,11 @@ class AuthRouter {
     this.router.get(
       `${this.path}/github/callback`,
       passport.authenticate('github', { session: false }),
+      this.authController.socialAccountLogin,
+    );
+    this.router.get(
+      `${this.path}/twitter/callback`,
+      passport.authenticate('twitter', { session: false }), // the sessions is needed to support Twitter login strategy
       this.authController.socialAccountLogin,
     );
   }

@@ -241,7 +241,11 @@ export class AuthController {
     }
   };
 
-  public google = async (req: Request, res: Response, next: NextFunction) => {
+  public googleLogin = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
       return passport.authenticate('google')(req, res, next);
     } catch (e: unknown) {
@@ -249,7 +253,11 @@ export class AuthController {
     }
   };
 
-  public facebook = async (req: Request, res: Response, next: NextFunction) => {
+  public facebookLogin = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
       return passport.authenticate('facebook')(req, res, next);
     } catch (e: unknown) {
@@ -257,7 +265,11 @@ export class AuthController {
     }
   };
 
-  public linkedin = async (req: Request, res: Response, next: NextFunction) => {
+  public linkedinLogin = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
       return passport.authenticate('linkedin')(req, res, next);
     } catch (e: unknown) {
@@ -265,9 +277,25 @@ export class AuthController {
     }
   };
 
-  public github = async (req: Request, res: Response, next: NextFunction) => {
+  public githubLogin = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
       return passport.authenticate('github')(req, res, next);
+    } catch (e: unknown) {
+      next(e);
+    }
+  };
+
+  public twitterLogin = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      return passport.authenticate('twitter')(req, res, next);
     } catch (e: unknown) {
       next(e);
     }
