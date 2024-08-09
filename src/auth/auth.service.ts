@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { UserService } from '../users/users.service';
-import { HttpError } from '../utils/Error';
+import ApplicationError from '../utils/Error';
 import { ILoginDto } from './dto/login.dto';
 import { IRegisterDto } from './dto/register.dto';
 import { IMailService } from '../notification-services/mail.interface';
@@ -12,7 +12,7 @@ import { generatePasswordRecovery } from '../assets/password-recovery';
 import {
   generateJWTToken,
   generateTokens,
-  verifyJWTToken,
+  verifyToken,
   verifyRefreshToken,
 } from '../utils/token';
 import { generatePasswordRecoveryNotification } from '../assets/password-recovery.infrom';
@@ -30,7 +30,7 @@ export class AuthService {
 
   public async login(payload: ILoginDto) {
     if (!payload.isVerified) {
-      throw new HttpError('User account is not verified', 403);
+      throw ApplicationError.Unauthorized('User account is not verified');
     }
 
     const isEqualPassword = await bcrypt.compare(
@@ -39,7 +39,9 @@ export class AuthService {
     );
 
     if (!isEqualPassword)
-      throw new HttpError('Incorrect email or password', 422);
+      throw ApplicationError.UnprocessableContent(
+        'Incorrect email or password',
+      );
 
     const { accessToken, refreshToken } = await generateTokens(payload.userId);
 
@@ -102,12 +104,12 @@ export class AuthService {
   }
 
   public async verifyEmail(token: string) {
-    const payload = await verifyJWTToken(token);
+    const payload = await verifyToken(token);
 
     const user = await this.userService.getUserById(payload.id);
 
     if (!user) {
-      throw new HttpError('Invalid verification token', 403);
+      throw ApplicationError.Unauthorized('Invalid verification token');
     }
 
     if (user.isVerified) {
@@ -162,18 +164,17 @@ export class AuthService {
   }
 
   public async resetPassword(payload: IResetPassword) {
-    const tokenPayload = await verifyJWTToken(payload.token);
+    const tokenPayload = await verifyToken(payload.token);
 
     const user = await this.userService.getUserById(tokenPayload.id);
 
     if (!user) {
-      throw new HttpError('Invalid verification token', 403);
+      throw ApplicationError.Unauthorized('Invalid verification token');
     }
 
     if (!user.password && user.registrationMethod === RegistrationType.Social) {
-      throw new HttpError(
+      throw ApplicationError.UnprocessableContent(
         'Password reset is not available for accounts with social login',
-        403,
       );
     }
 
@@ -183,9 +184,8 @@ export class AuthService {
     );
 
     if (isEqualPasswords) {
-      throw new HttpError(
+      throw ApplicationError.Conflict(
         'User password should be different from an old password',
-        409,
       );
     }
 

@@ -4,7 +4,7 @@ import { Types } from 'mongoose';
 import { NextFunction, Response } from 'express';
 import { TelegramDocument } from '../bot/types/telegram-file.type';
 import { IFile } from '../files/model/files.interface';
-import { HttpError } from './Error';
+import ApplicationError from './Error';
 
 /**
  * Fetches multiple file chunks from the given URLs and sends the data to the client.
@@ -166,9 +166,8 @@ export function handleFieldEvent(
     case 'parent':
       if (!val || typeof val !== 'string') {
         return next(
-          new HttpError(
+          ApplicationError.BadRequest(
             'ParentId must be not empty string of valid directory id',
-            400,
           ),
         );
       }
@@ -178,9 +177,8 @@ export function handleFieldEvent(
     case 'type':
       if (typeof val !== 'string' || val !== 'directory') {
         return next(
-          new HttpError(
+          ApplicationError.BadRequest(
             'Type field must be a string with a "directory" value',
-            400,
           ),
         );
       }
@@ -190,9 +188,8 @@ export function handleFieldEvent(
     case 'name':
       if (!val || typeof val !== 'string') {
         return next(
-          new HttpError(
+          ApplicationError.BadRequest(
             'Name must be not empty string when creating a directory 1',
-            400,
           ),
         );
       }

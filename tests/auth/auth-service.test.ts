@@ -18,7 +18,7 @@ import MockUserService from '../users/mock/user.service.mock';
 import MailServiceMock from '../mock/mail.service';
 import { IMailService } from '../../src/notification-services/mail.interface';
 import * as tokenUtils from '../../src/utils/token';
-import { HttpError } from '../../src/utils/Error';
+import ApplicationError from '../../src/utils/Error';
 import { RegistrationType } from '../../src/users/model/users.interface';
 import { userMock } from '../users/mock/user.mock';
 import { ProviderType } from '../../src/users/model/social-account.interface';
@@ -31,7 +31,7 @@ jest.mock('bcrypt', () => ({
 jest.mock('../../src/utils/token', () => {
   return {
     __esModule: true,
-    verifyJWTToken: jest.fn(() => Promise.resolve(testJWTPayload)),
+    verifyToken: jest.fn(() => Promise.resolve(testJWTPayload)),
     verifyRefreshToken: jest.fn(() => Promise.resolve(testJWTPayload)),
     generateJWTToken: jest.fn(() => Promise.resolve(testJWTToken)),
     generateTokens: jest.fn(() =>
@@ -151,7 +151,9 @@ describe('AuthService', () => {
       jest
         .spyOn(tokenUtils, 'verifyRefreshToken')
         .mockImplementationOnce(() => {
-          return Promise.reject(new HttpError('Invalid JWT token', 401));
+          return Promise.reject(
+            ApplicationError.Unauthenticated('Invalid JWT token'),
+          );
         });
 
       expect(() => authService.refreshTokens(mockRefreshToken)).rejects.toThrow(
@@ -166,11 +168,9 @@ describe('AuthService', () => {
         String(new Types.ObjectId('60958c9f0000000000000000')),
       );
 
-      jest
-        .spyOn(tokenUtils, 'verifyJWTToken')
-        .mockImplementationOnce(async () => {
-          return { id: String(new Types.ObjectId('60958c9f0000000000000000')) };
-        });
+      jest.spyOn(tokenUtils, 'verifyToken').mockImplementationOnce(async () => {
+        return { id: String(new Types.ObjectId('60958c9f0000000000000000')) };
+      });
 
       const result = await authService.verifyEmail(mockToken);
 
@@ -210,8 +210,10 @@ describe('AuthService', () => {
         String(new Types.ObjectId('60958c9f0000000000000000')),
       );
 
-      jest.spyOn(tokenUtils, 'verifyJWTToken').mockImplementationOnce(() => {
-        return Promise.reject(new HttpError('Invalid verification token', 403));
+      jest.spyOn(tokenUtils, 'verifyToken').mockImplementationOnce(() => {
+        return Promise.reject(
+          ApplicationError.Unauthorized('Invalid verification token'),
+        );
       });
       expect(() => authService.verifyEmail(mockToken)).rejects.toThrow(
         'Invalid verification token',
@@ -223,8 +225,10 @@ describe('AuthService', () => {
         String(new Types.ObjectId('60958c9f0000000000000000')),
       );
 
-      jest.spyOn(tokenUtils, 'verifyJWTToken').mockImplementationOnce(() => {
-        return Promise.reject(new HttpError('Invalid verification token', 403));
+      jest.spyOn(tokenUtils, 'verifyToken').mockImplementationOnce(() => {
+        return Promise.reject(
+          ApplicationError.Unauthorized('Invalid verification token'),
+        );
       });
 
       expect(() => authService.verifyEmail(mockToken)).rejects.toThrow(
@@ -270,11 +274,9 @@ describe('AuthService', () => {
       const mockToken = createAccessToken(
         String(new Types.ObjectId('60958c9f0000000000000000')),
       );
-      jest
-        .spyOn(tokenUtils, 'verifyJWTToken')
-        .mockImplementationOnce(async () => {
-          return { id: String(new Types.ObjectId('60958c9f0000000000000000')) };
-        });
+      jest.spyOn(tokenUtils, 'verifyToken').mockImplementationOnce(async () => {
+        return { id: String(new Types.ObjectId('60958c9f0000000000000000')) };
+      });
 
       const result = await authService.resetPassword({
         token: mockToken,
@@ -285,8 +287,10 @@ describe('AuthService', () => {
     });
 
     it('should throw an error when token is not valid', async () => {
-      jest.spyOn(tokenUtils, 'verifyJWTToken').mockImplementationOnce(() => {
-        return Promise.reject(new HttpError('Invalid verification token', 403));
+      jest.spyOn(tokenUtils, 'verifyToken').mockImplementationOnce(() => {
+        return Promise.reject(
+          ApplicationError.Unauthorized('Invalid verification token'),
+        );
       });
 
       expect(() =>
@@ -301,11 +305,9 @@ describe('AuthService', () => {
       const mockToken = createAccessToken(
         String(new Types.ObjectId('60958c9f0000000000000000')),
       );
-      jest
-        .spyOn(tokenUtils, 'verifyJWTToken')
-        .mockImplementationOnce(async () => {
-          return { id: String(new Types.ObjectId('60958c9f0000000000000000')) };
-        });
+      jest.spyOn(tokenUtils, 'verifyToken').mockImplementationOnce(async () => {
+        return { id: String(new Types.ObjectId('60958c9f0000000000000000')) };
+      });
       jest
         .spyOn(bcrypt, 'compare')
         .mockImplementationOnce(() => Promise.resolve(true));

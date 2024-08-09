@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
 import passport from 'passport';
-import { HttpError } from '../utils/Error';
+import ApplicationError from '../utils/Error';
 import { AuthService } from './auth.service';
 import { UserService } from '../users/users.service';
 import {
@@ -31,21 +31,25 @@ export class AuthController {
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        throw new HttpError(prepareValidationErrorMessage(errors.array()), 400);
+        throw ApplicationError.BadRequest(
+          prepareValidationErrorMessage(errors.array()),
+        );
       }
 
       const { email, password }: ILoginBody = req.body;
       const candidate = await this.userService.getUserByEmail(email);
 
-      if (!candidate) throw new HttpError('Incorrect email or password', 422);
+      if (!candidate)
+        throw ApplicationError.UnprocessableContent(
+          'Incorrect email or password',
+        );
 
       if (
         !candidate.password &&
         candidate.registrationMethod === RegistrationType.Social
       ) {
-        throw new HttpError(
+        throw ApplicationError.Conflict(
           'This email is already registered with a social account',
-          409,
         );
       }
 
@@ -69,7 +73,9 @@ export class AuthController {
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        throw new HttpError(prepareValidationErrorMessage(errors.array()), 400);
+        throw ApplicationError.BadRequest(
+          prepareValidationErrorMessage(errors.array()),
+        );
       }
 
       const { name, email, password }: IRegisterBody = req.body;
@@ -77,7 +83,9 @@ export class AuthController {
       const candidate = await this.userService.getUserByEmail(email);
 
       if (candidate) {
-        throw new HttpError(`User with email ${email} aready exist`, 409);
+        throw ApplicationError.Conflict(
+          `User with email ${email} aready exist`,
+        );
       }
 
       const newUser = await this.authService.register({
@@ -101,7 +109,9 @@ export class AuthController {
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        throw new HttpError(prepareValidationErrorMessage(errors.array()), 400);
+        throw ApplicationError.BadRequest(
+          prepareValidationErrorMessage(errors.array()),
+        );
       }
 
       const { refreshToken }: IRefreshTokensBody = req.body;
@@ -121,7 +131,9 @@ export class AuthController {
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        throw new HttpError(prepareValidationErrorMessage(errors.array()), 400);
+        throw ApplicationError.BadRequest(
+          prepareValidationErrorMessage(errors.array()),
+        );
       }
 
       const { token }: IVerificationTokenBody = req.body;
@@ -151,7 +163,9 @@ export class AuthController {
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        throw new HttpError(prepareValidationErrorMessage(errors.array()), 400);
+        throw ApplicationError.BadRequest(
+          prepareValidationErrorMessage(errors.array()),
+        );
       }
 
       const { email }: IEmailTokenBody = req.body;
@@ -166,7 +180,7 @@ export class AuthController {
       }
 
       if (candidate.isVerified) {
-        throw new HttpError('Account is already verified', 409);
+        throw ApplicationError.Conflict('Account is already verified');
       }
 
       const result = await this.authService.resendEmail({
@@ -190,7 +204,9 @@ export class AuthController {
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        throw new HttpError(prepareValidationErrorMessage(errors.array()), 400);
+        throw ApplicationError.BadRequest(
+          prepareValidationErrorMessage(errors.array()),
+        );
       }
 
       const { email }: IPasswordRecoveryBody = req.body;
@@ -225,7 +241,9 @@ export class AuthController {
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        throw new HttpError(prepareValidationErrorMessage(errors.array()), 400);
+        throw ApplicationError.BadRequest(
+          prepareValidationErrorMessage(errors.array()),
+        );
       }
 
       const { token, password }: IPasswordResetBody = req.body;

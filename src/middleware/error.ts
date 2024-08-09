@@ -1,5 +1,5 @@
 import { ErrorRequestHandler, NextFunction, Request, Response } from 'express';
-import { HttpError } from '../utils/Error';
+import ApplicationError from '../utils/Error';
 import logger from '../utils/logger';
 
 export const errorHandler = (
@@ -8,7 +8,7 @@ export const errorHandler = (
   res: Response,
   next: NextFunction,
 ) => {
-  if (error instanceof HttpError) {
+  if (error instanceof ApplicationError) {
     if (error.status === 401) {
       res.setHeader(
         'WWW-Authenticate',

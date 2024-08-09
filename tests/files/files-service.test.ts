@@ -10,7 +10,7 @@ import { IFile } from '../../src/files/model/files.interface';
 import MockBotService from './mock/bot.service.mock';
 import { fileMock, filesMock, mockDirectory } from './mock/files.mock';
 import { Sort } from '../../src/files/types/files.sort';
-import { HttpError } from '../../src/utils/Error';
+import ApplicationError from '../../src/utils/Error';
 import { deleteResultMock } from '../users/mock/user.mock';
 import { CreateFileDto } from '../../src/files/dto/create-file.dto';
 
@@ -73,11 +73,11 @@ describe('FileService', () => {
       expect(result).toEqual(filesMock);
     });
 
-    it('should throw an HttpError if parent is not valid directory id', async () => {
+    it('should throw an ApplicationError if parent is not valid directory id', async () => {
       try {
         const result = await fileService.getAll(userId, 'some-id', undefined);
       } catch (e: unknown) {
-        expect(e).toBeInstanceOf(HttpError);
+        expect(e).toBeInstanceOf(ApplicationError);
         expect(e).toMatchObject({
           message: 'Directory id is not valid',
           status: 400,
@@ -116,7 +116,7 @@ describe('FileService', () => {
       const fakeUserId = new Types.ObjectId();
       expect(
         fileService.getOne(String(fileMock._id), fakeUserId),
-      ).rejects.toBeInstanceOf(HttpError);
+      ).rejects.toBeInstanceOf(ApplicationError);
       expect(
         fileService.getOne(String(fileMock._id), fakeUserId),
       ).rejects.toMatchObject({
@@ -144,7 +144,7 @@ describe('FileService', () => {
 
       expect(
         fileService.download(String(mockDirectory._id), userId),
-      ).rejects.toBeInstanceOf(HttpError);
+      ).rejects.toBeInstanceOf(ApplicationError);
 
       jest
         .spyOn(fileRepository, 'getOne')
@@ -153,7 +153,7 @@ describe('FileService', () => {
       expect(
         fileService.download(String(mockDirectory._id), userId),
       ).rejects.toMatchObject({
-        message: 'Can not get folder',
+        message: 'Cannot download a folder',
         status: 400,
       });
     });
@@ -163,7 +163,7 @@ describe('FileService', () => {
 
       expect(
         fileService.download(String(directoryId), userId),
-      ).rejects.toBeInstanceOf(HttpError);
+      ).rejects.toBeInstanceOf(ApplicationError);
       expect(
         fileService.download(String(directoryId), userId),
       ).rejects.toMatchObject({
@@ -174,7 +174,7 @@ describe('FileService', () => {
 
     it('should throw an error if the file id is not valid', async () => {
       expect(fileService.download('not valid', userId)).rejects.toBeInstanceOf(
-        HttpError,
+        ApplicationError,
       );
       expect(fileService.download('not valid', userId)).rejects.toMatchObject({
         message: 'File id is not valid',
@@ -185,7 +185,7 @@ describe('FileService', () => {
     it('should throw an error if user not has a permission to access the file', async () => {
       expect(
         fileService.download(fileMock._id.toString(), new Types.ObjectId()),
-      ).rejects.toBeInstanceOf(HttpError);
+      ).rejects.toBeInstanceOf(ApplicationError);
       expect(
         fileService.download(fileMock._id.toString(), new Types.ObjectId()),
       ).rejects.toMatchObject({
@@ -266,7 +266,7 @@ describe('FileService', () => {
       );
 
       expect(file).rejects.toMatchObject(
-        new HttpError('Directory id is not valid', 400),
+        ApplicationError.BadRequest('Directory id is not valid'),
       );
     });
     it('should thrown an error when creating a new file with a wrong parent id', async () => {
@@ -279,7 +279,7 @@ describe('FileService', () => {
       );
 
       expect(file).rejects.toMatchObject(
-        new HttpError('Directory not exist', 404),
+        ApplicationError.NotFound('Directory not exist'),
       );
     });
 
@@ -295,7 +295,9 @@ describe('FileService', () => {
       );
 
       expect(file).rejects.toMatchObject(
-        new HttpError('User not have permission to access this file', 403),
+        ApplicationError.Unauthorized(
+          'User not have permission to access this file',
+        ),
       );
     });
 
@@ -369,7 +371,7 @@ describe('FileService', () => {
       );
 
       expect(file).rejects.toMatchObject(
-        new HttpError('Directory id is not valid', 400),
+        ApplicationError.BadRequest('Directory id is not valid'),
       );
     });
     it('should thrown an error when creating a new composed file with a wrong parent id', async () => {
@@ -382,7 +384,7 @@ describe('FileService', () => {
       );
 
       expect(file).rejects.toMatchObject(
-        new HttpError('Directory not exist', 404),
+        ApplicationError.NotFound('Directory not exist'),
       );
     });
 
@@ -398,7 +400,9 @@ describe('FileService', () => {
       );
 
       expect(file).rejects.toMatchObject(
-        new HttpError('User not have permission to access this file', 403),
+        ApplicationError.Unauthorized(
+          'User not have permission to access this file',
+        ),
       );
     });
   });
@@ -592,7 +596,7 @@ describe('FileService', () => {
       const invalidId = 'invalid-id';
 
       expect(fileService.delete(invalidId, userId)).rejects.toThrowError(
-        HttpError,
+        ApplicationError,
       );
       expect(fileService.delete(invalidId, userId)).rejects.toMatchObject({
         message: 'File id is not valid',

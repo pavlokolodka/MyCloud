@@ -2,7 +2,7 @@ import { unlink } from 'fs/promises';
 import { Types } from 'mongoose';
 import { BotService } from '../bot/bot.service';
 import { isValidObjectId } from '../utils/isObjectId';
-import { HttpError } from '../utils/Error';
+import ApplicationError from '../utils/Error';
 import { IFile } from './model/files.interface';
 import { IFileRepository } from './model/files.repository-interface';
 import { TelegramDocument } from '../bot/types/telegram-file.type';
@@ -35,14 +35,16 @@ class FileService {
   async getOne(id: string, userId: Types.ObjectId) {
     const isValidId = isValidObjectId(id);
 
-    if (!isValidId) throw new HttpError('File id is not valid', 400);
+    if (!isValidId) throw ApplicationError.BadRequest('File id is not valid');
 
     const file = await this.fileRepository.getOne(new Types.ObjectId(id));
 
-    if (!file) throw new HttpError('File not found', 404);
+    if (!file) throw ApplicationError.NotFound('File not found');
 
     if (String(file.userId) !== String(userId)) {
-      throw new HttpError('User not have permission to access this file', 403);
+      throw ApplicationError.Unauthorized(
+        'User not have permission to access this file',
+      );
     }
 
     return file;
@@ -52,7 +54,7 @@ class FileService {
     const file = await this.getOne(id, userId);
 
     if (file.type === 'directory')
-      throw new HttpError('Can not get folder', 400);
+      throw ApplicationError.BadRequest('Cannot download a folder');
 
     await this.checkLinkExp([file]);
 
@@ -67,7 +69,7 @@ class FileService {
     const file = await this.getOne(id, userId);
 
     if (file.type === 'directory')
-      throw new HttpError('Can not get folder', 400);
+      throw ApplicationError.BadRequest('Cannot download a folder');
 
     const chunkLinks = file.chunks!.map((chunkId: string) => {
       return this.botService.getLink(chunkId);
@@ -265,7 +267,7 @@ class FileService {
   async delete(id: string, userId: Types.ObjectId) {
     const isValidId = isValidObjectId(id);
 
-    if (!isValidId) throw new HttpError('File id is not valid', 400);
+    if (!isValidId) throw ApplicationError.BadRequest('File id is not valid');
 
     const file = await this.getOne(id, userId);
 
@@ -292,18 +294,21 @@ class FileService {
   private async getParentFile(parentId: string, userId: Types.ObjectId) {
     const isValidId = isValidObjectId(parentId);
 
-    if (!isValidId) throw new HttpError('Directory id is not valid', 400);
+    if (!isValidId)
+      throw ApplicationError.BadRequest('Directory id is not valid');
 
     const fileParent = await this.fileRepository.getOne(
       new Types.ObjectId(parentId),
     );
 
     if (!fileParent || fileParent.type !== 'directory') {
-      throw new HttpError('Directory not exist', 404);
+      throw ApplicationError.NotFound('Directory not exist');
     }
 
     if (String(fileParent.userId) !== String(userId)) {
-      throw new HttpError('User not have permission to access this file', 403);
+      throw ApplicationError.Unauthorized(
+        'User not have permission to access this file',
+      );
     }
 
     return fileParent;
@@ -371,9 +376,8 @@ class FileService {
     parentId?: string,
   ) {
     if (String(fileParentId) === String(parentId)) {
-      throw new HttpError(
+      throw ApplicationError.Conflict(
         'Unable to add an existing file to the directory',
-        409,
       );
     }
   }
