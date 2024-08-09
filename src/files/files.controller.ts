@@ -3,7 +3,7 @@ import https from 'https';
 import { validationResult } from 'express-validator';
 import { IncomingMessage } from 'http';
 import { ReadStream, WriteStream } from 'fs';
-import { HttpError } from '../utils/Error';
+import ApplicationError from '../utils/Error';
 import FileService from './files.service';
 import { UserService } from '../users/users.service';
 import {
@@ -33,15 +33,14 @@ class FileController {
     try {
       const id = req.query.id as string;
 
-      if (!id) throw new HttpError('File id not passed', 400);
+      if (!id) throw ApplicationError.BadRequest('File id not passed');
 
       const userId = req.user.id;
       const candidate = await this.userService.getUserById(userId);
 
       if (!candidate)
-        throw new HttpError(
+        throw ApplicationError.Unauthorized(
           'User not have permission to access this file',
-          403,
         );
 
       const savedFile = await this.fileService.download(id, candidate._id);
@@ -73,15 +72,14 @@ class FileController {
     try {
       const id = req.query.id as string;
 
-      if (!id) throw new HttpError('File id not passed', 400);
+      if (!id) throw ApplicationError.BadRequest('File id not passed');
 
       const userId = req.user.id;
       const candidate = await this.userService.getUserById(userId);
 
       if (!candidate)
-        throw new HttpError(
+        throw ApplicationError.Unauthorized(
           'User not have permission to access this file',
-          403,
         );
 
       const savedFile = await this.fileService.downloadLarge(id, candidate._id);
@@ -104,9 +102,8 @@ class FileController {
       const candidate = await this.userService.getUserById(userId);
 
       if (!candidate)
-        throw new HttpError(
+        throw ApplicationError.Unauthorized(
           'User not have permission to access this file',
-          403,
         );
 
       const files = await this.fileService.getAll(
@@ -128,9 +125,8 @@ class FileController {
       const candidate = await this.userService.getUserById(userId);
 
       if (!candidate)
-        throw new HttpError(
+        throw ApplicationError.Unauthorized(
           'User not have permission to access this file',
-          403,
         );
 
       const file = await this.fileService.getOne(fileId, candidate._id);
@@ -147,15 +143,14 @@ class FileController {
       const candidate = await this.userService.getUserById(userId);
 
       if (!candidate)
-        throw new HttpError(
+        throw ApplicationError.Unauthorized(
           'User not have permission to access this file',
-          403,
         );
 
       const reqBodyLength = Number(req.headers['content-length']);
       // 172 - the size of content length when the "file" field is empty
       if (reqBodyLength <= 172) {
-        throw new HttpError('File or required fields not passed', 400);
+        throw ApplicationError.BadRequest('File or required fields not passed');
       }
 
       req.pipe(req.busboy);
@@ -192,9 +187,8 @@ class FileController {
               // when name field is ommited
               fieldEventState.directoryName ||
                 (() => {
-                  throw new HttpError(
+                  throw ApplicationError.BadRequest(
                     'Name must be not empty string when creating a directory',
-                    400,
                   );
                 })();
 
@@ -232,24 +226,25 @@ class FileController {
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        throw new HttpError(prepareValidationErrorMessage(errors.array()), 400);
+        throw ApplicationError.BadRequest(
+          prepareValidationErrorMessage(errors.array()),
+        );
       }
 
       const { parent, name }: IUpdateFileBody = req.body;
       const fileId = req.params.id;
 
-      if (!fileId) throw new HttpError('File id is required', 400);
+      if (!fileId) throw ApplicationError.BadRequest('File id is required');
 
       if (!parent && !name)
-        throw new HttpError('name or parent is required', 400);
+        throw ApplicationError.BadRequest('File name or parent is required');
 
       const userId = req.user.id;
       const candidate = await this.userService.getUserById(userId);
 
       if (!candidate)
-        throw new HttpError(
+        throw ApplicationError.Unauthorized(
           'User not have permission to access this file',
-          403,
         );
 
       const updatedFile = await this.fileService.update(
@@ -269,15 +264,14 @@ class FileController {
     try {
       const id = req.params?.id;
 
-      if (!id) throw new HttpError('File id is required', 400);
+      if (!id) throw ApplicationError.BadRequest('File id is required');
 
       const userId = req.user.id;
       const candidate = await this.userService.getUserById(userId);
 
       if (!candidate)
-        throw new HttpError(
+        throw ApplicationError.Unauthorized(
           'User not have permission to access this file',
-          403,
         );
 
       const file = await this.fileService.delete(id, candidate._id);

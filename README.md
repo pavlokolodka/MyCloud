@@ -74,7 +74,7 @@ You can view the UML component and deployment diagrams by clicking on the link.
 MyCloud provides a RESTful API with OpenAPI documentation, allowing developers to easily understand and utilize its functionality.
 Detailed documentation of the API endpoints and usage can be found in
 
-> [localhost:5000/docs](http://localhost:5000/docs)
+> [localhost:5000/v1/docs](http://localhost:5000/v1/docs)
 
 ### Development:
 

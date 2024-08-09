@@ -1,7 +1,7 @@
 {
   "name": "mycloud",
   "version": "1.0.0",
-  "description": "",
+  "description": "MyCloud is a file server written in Node.js that provides file management capabilities with unlimited storage. ",
   "main": "index.js",
   "scripts": {
     "build": "npx tsc",

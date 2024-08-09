@@ -1,18 +1,19 @@
 import * as jwt from 'jsonwebtoken';
 import { Types } from 'mongoose';
 import { refreshSecretKey, secretKey } from '../auth/constants';
-import { HttpError } from './Error';
+import ApplicationError from './Error';
 
 /**
- * Verify a JWT token. Used for account verification, password recovery.
+ * Verifies a provided token. Used for email verification, password recovery.
  * @param {string} token - The JWT token to verify.
  * @returns {Promise<jwt.JwtPayload>} A Promise that resolves to the decoded JWT payload if the token is valid.
- * @throws {HttpError} If the token is invalid or expired throws 403.
+ * @throws {ApplicationError} If the token is invalid or expired throws 401.
  */
-export async function verifyJWTToken(token: string) {
+export async function verifyToken(token: string) {
   return new Promise((res, rej) => {
     jwt.verify(token, secretKey, (error, decoded) => {
-      if (error) rej(new HttpError('Invalid verification token', 403));
+      if (error)
+        rej(ApplicationError.Unauthorized('Invalid verification token'));
 
       res(decoded);
     });
@@ -20,7 +21,7 @@ export async function verifyJWTToken(token: string) {
 }
 
 /**
- * Generate a JWT token. Used as a token account verification, password recovery.
+ * Generates a JWT token. Used as a token account verification, password recovery.
  * @param {string} token - The JWT token to verify.
  * @returns {Promise<jwt.Jwt>} A Promise that resolves to the encoded JWT token.
  * @throws {Error } If the token is invalid or expired.
@@ -41,23 +42,39 @@ export async function generateJWTToken(id: Types.ObjectId) {
     );
   });
 }
+
 /**
- * Verify a JWT refresh token.
+ * Verifies a JWT access token.
  * @param {string} token - The JWT token to verify.
  * @returns {Promise<jwt.JwtPayload>} A Promise that resolves to the decoded JWT payload if the token is valid.
- * @throws {HttpError} If the token is invalid or expired throws 401.
+ * @throws {ApplicationError} If the token is invalid or expired throws 401.
  */
-export async function verifyRefreshToken(token: string) {
+export async function verifyAccessToken(token: string) {
   return new Promise((res, rej) => {
-    jwt.verify(token, refreshSecretKey, (error, decoded) => {
-      if (error) rej(new HttpError('Invalid JWT token', 401));
+    jwt.verify(token, secretKey, (error, decoded) => {
+      if (error) rej(ApplicationError.Unauthenticated('Invalid JWT token'));
 
       res(decoded);
     });
   }) as unknown as jwt.JwtPayload;
 }
 /**
- * Generate a pair of JWT tokens (access and refresh). Used for basic auth.
+ * Verifies a JWT refresh token.
+ * @param {string} token - The JWT token to verify.
+ * @returns {Promise<jwt.JwtPayload>} A Promise that resolves to the decoded JWT payload if the token is valid.
+ * @throws {ApplicationError} If the token is invalid or expired throws 401.
+ */
+export async function verifyRefreshToken(token: string) {
+  return new Promise((res, rej) => {
+    jwt.verify(token, refreshSecretKey, (error, decoded) => {
+      if (error) rej(ApplicationError.Unauthenticated('Invalid JWT token'));
+
+      res(decoded);
+    });
+  }) as unknown as jwt.JwtPayload;
+}
+/**
+ * Generates a pair of JWT tokens (access and refresh). Used for basic auth.
  * @param {string} token - The JWT token to verify.
  * @returns {Promise<jwt.Jwt>} A Promise that resolves to the encoded JWT token.
  * @throws {Error } If the token is invalid or expired.
